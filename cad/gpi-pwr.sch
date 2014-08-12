@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
@@ -1410,7 +1410,7 @@ With round pins</description>
 <part name="L1" library="jaw" deviceset="L" device="AIRD03" value="100u"/>
 <part name="C1" library="jaw" deviceset="C" device="R46KI333000N1M" value=".33u"/>
 <part name="C2" library="jaw" deviceset="C" device="MKP1848S62010JY5F" value="20u"/>
-<part name="C3" library="jaw" deviceset="C" device="2220" value=".1u CER"/>
+<part name="C3" library="jaw" deviceset="C" device="2220" value=".1u"/>
 <part name="R1" library="jaw" deviceset="R" device="2512" value="1M 2kV"/>
 <part name="Q1" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
 <part name="Q3" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
@@ -1531,6 +1531,8 @@ With round pins</description>
 <part name="U$5" library="jaw" deviceset="SYMBOL-WARNING" device=""/>
 <part name="U$6" library="jaw" deviceset="SYMBOL-WARNING" device=""/>
 <part name="U$7" library="jaw" deviceset="SYMBOL-WARNING" device=""/>
+<part name="C26" library="jaw" deviceset="C" device="2220" value=".1u"/>
+<part name="R25" library="jaw" deviceset="R" device="1206" value="1M"/>
 </parts>
 <sheets>
 <sheet>
@@ -1667,6 +1669,8 @@ With round pins</description>
 <instance part="U$5" gate="G$1" x="368.3" y="45.72"/>
 <instance part="U$6" gate="G$1" x="355.6" y="45.72"/>
 <instance part="U$7" gate="G$1" x="342.9" y="45.72"/>
+<instance part="C26" gate="G$1" x="132.08" y="86.36"/>
+<instance part="R25" gate="G$1" x="50.8" y="78.74" rot="R90"/>
 </instances>
 <busses>
 </busses>
@@ -1685,6 +1689,9 @@ With round pins</description>
 <wire x1="45.72" y1="68.58" x2="45.72" y2="83.82" width="0.1524" layer="91"/>
 <wire x1="20.32" y1="68.58" x2="45.72" y2="68.58" width="0.1524" layer="91"/>
 <junction x="45.72" y="68.58"/>
+<pinref part="R25" gate="G$1" pin="P$1"/>
+<wire x1="50.8" y1="73.66" x2="50.8" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="68.58" x2="45.72" y2="68.58" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="Q1" gate="G$1" pin="S"/>
@@ -1708,6 +1715,10 @@ With round pins</description>
 <junction x="121.92" y="78.74"/>
 <pinref part="C4" gate="G$1" pin="P$2"/>
 <wire x1="121.92" y1="83.82" x2="121.92" y2="78.74" width="0.1524" layer="91"/>
+<pinref part="C26" gate="G$1" pin="P$2"/>
+<wire x1="132.08" y1="83.82" x2="132.08" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="78.74" x2="127" y2="78.74" width="0.1524" layer="91"/>
+<junction x="127" y="78.74"/>
 </segment>
 <segment>
 <pinref part="Q6" gate="G$1" pin="S"/>
@@ -1944,8 +1955,9 @@ With round pins</description>
 <wire x1="147.32" y1="104.14" x2="215.9" y2="104.14" width="0.1524" layer="91"/>
 <junction x="215.9" y="104.14"/>
 <pinref part="R1" gate="G$1" pin="P$2"/>
-<wire x1="127" y1="96.52" x2="142.24" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="127" y1="96.52" x2="132.08" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="C3" gate="G$1" pin="P$1"/>
+<wire x1="132.08" y1="96.52" x2="142.24" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="127" y1="91.44" x2="127" y2="96.52" width="0.1524" layer="91"/>
 <junction x="127" y="96.52"/>
 <wire x1="116.84" y1="96.52" x2="121.92" y2="96.52" width="0.1524" layer="91"/>
@@ -1960,6 +1972,9 @@ With round pins</description>
 <wire x1="116.84" y1="96.52" x2="114.3" y2="96.52" width="0.1524" layer="91"/>
 <junction x="116.84" y="96.52"/>
 <label x="149.86" y="101.6" size="1.778" layer="95"/>
+<pinref part="C26" gate="G$1" pin="P$1"/>
+<wire x1="132.08" y1="91.44" x2="132.08" y2="96.52" width="0.1524" layer="91"/>
+<junction x="132.08" y="96.52"/>
 </segment>
 </net>
 <net name="ADC2" class="0">
@@ -2586,7 +2601,8 @@ With round pins</description>
 <wire x1="20.32" y1="71.12" x2="35.56" y2="71.12" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="101.6" x2="35.56" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="L1" gate="G$1" pin="P$1"/>
-<wire x1="48.26" y1="96.52" x2="53.34" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="48.26" y1="96.52" x2="50.8" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="96.52" x2="53.34" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="96.52" x2="40.64" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="C1" gate="G$1" pin="P$1"/>
 <wire x1="40.64" y1="96.52" x2="45.72" y2="96.52" width="0.1524" layer="91"/>
@@ -2597,6 +2613,9 @@ With round pins</description>
 <wire x1="35.56" y1="71.12" x2="40.64" y2="71.12" width="0.1524" layer="91"/>
 <wire x1="40.64" y1="71.12" x2="40.64" y2="96.52" width="0.1524" layer="91"/>
 <junction x="40.64" y="96.52"/>
+<pinref part="R25" gate="G$1" pin="P$2"/>
+<wire x1="50.8" y1="83.82" x2="50.8" y2="96.52" width="0.1524" layer="91"/>
+<junction x="50.8" y="96.52"/>
 </segment>
 </net>
 <net name="N$2" class="0">

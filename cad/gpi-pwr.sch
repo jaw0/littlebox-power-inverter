@@ -1556,10 +1556,10 @@ With round pins</description>
 <instance part="Q6" gate="G$1" x="215.9" y="76.2"/>
 <instance part="Q7" gate="G$1" x="264.16" y="96.52"/>
 <instance part="Q8" gate="G$1" x="264.16" y="76.2"/>
-<instance part="L3" gate="G$1" x="317.5" y="99.06"/>
-<instance part="L4" gate="G$1" x="317.5" y="73.66"/>
-<instance part="C6" gate="G$1" x="327.66" y="93.98"/>
-<instance part="C7" gate="G$1" x="327.66" y="76.2"/>
+<instance part="L3" gate="G$1" x="304.8" y="99.06"/>
+<instance part="L4" gate="G$1" x="304.8" y="73.66"/>
+<instance part="C6" gate="G$1" x="294.64" y="86.36"/>
+<instance part="C7" gate="G$1" x="312.42" y="86.36"/>
 <instance part="R5" gate="G$1" x="142.24" y="76.2" rot="R90"/>
 <instance part="R10" gate="G$1" x="335.28" y="86.36" rot="R180"/>
 <instance part="R12" gate="G$1" x="350.52" y="86.36" rot="R180"/>
@@ -1732,13 +1732,8 @@ With round pins</description>
 <junction x="241.3" y="68.58"/>
 </segment>
 <segment>
-<pinref part="C6" gate="G$1" pin="P$2"/>
-<pinref part="C7" gate="G$1" pin="P$1"/>
-<wire x1="327.66" y1="81.28" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
 <pinref part="GND10" gate="G$1" pin="GND"/>
-<wire x1="327.66" y1="86.36" x2="327.66" y2="91.44" width="0.1524" layer="91"/>
 <wire x1="320.04" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
-<junction x="327.66" y="86.36"/>
 <pinref part="R10" gate="G$1" pin="P$2"/>
 <wire x1="330.2" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
 </segment>
@@ -1995,23 +1990,22 @@ With round pins</description>
 </net>
 <net name="N$24" class="0">
 <segment>
-<wire x1="327.66" y1="99.06" x2="358.14" y2="99.06" width="0.1524" layer="91"/>
 <wire x1="358.14" y1="99.06" x2="365.76" y2="99.06" width="0.1524" layer="91"/>
 <wire x1="365.76" y1="99.06" x2="365.76" y2="101.6" width="0.1524" layer="91"/>
 <pinref part="U2" gate="G$1" pin="IP+"/>
 <pinref part="D1" gate="G$1" pin="A"/>
 <wire x1="358.14" y1="93.98" x2="358.14" y2="99.06" width="0.1524" layer="91"/>
 <junction x="358.14" y="99.06"/>
-<pinref part="C6" gate="G$1" pin="P$1"/>
 <pinref part="L3" gate="G$1" pin="P$2"/>
-<wire x1="325.12" y1="99.06" x2="327.66" y2="99.06" width="0.1524" layer="91"/>
-<junction x="327.66" y="99.06"/>
+<wire x1="312.42" y1="99.06" x2="358.14" y2="99.06" width="0.1524" layer="91"/>
+<pinref part="C7" gate="G$1" pin="P$1"/>
+<wire x1="312.42" y1="91.44" x2="312.42" y2="99.06" width="0.1524" layer="91"/>
+<junction x="312.42" y="99.06"/>
 </segment>
 </net>
 <net name="N$25" class="0">
 <segment>
 <pinref part="CN2" gate="G$1" pin="3"/>
-<wire x1="327.66" y1="73.66" x2="358.14" y2="73.66" width="0.1524" layer="91"/>
 <wire x1="358.14" y1="73.66" x2="401.32" y2="73.66" width="0.1524" layer="91"/>
 <wire x1="401.32" y1="73.66" x2="408.94" y2="73.66" width="0.1524" layer="91"/>
 <wire x1="408.94" y1="73.66" x2="408.94" y2="83.82" width="0.1524" layer="91"/>
@@ -2020,11 +2014,12 @@ With round pins</description>
 <junction x="358.14" y="73.66"/>
 <pinref part="C7" gate="G$1" pin="P$2"/>
 <pinref part="L4" gate="G$1" pin="P$2"/>
-<wire x1="325.12" y1="73.66" x2="327.66" y2="73.66" width="0.1524" layer="91"/>
-<junction x="327.66" y="73.66"/>
+<wire x1="312.42" y1="73.66" x2="312.42" y2="83.82" width="0.1524" layer="91"/>
 <pinref part="R3" gate="G$1" pin="P$1"/>
 <wire x1="401.32" y1="76.2" x2="401.32" y2="73.66" width="0.1524" layer="91"/>
 <junction x="401.32" y="73.66"/>
+<wire x1="312.42" y1="73.66" x2="358.14" y2="73.66" width="0.1524" layer="91"/>
+<junction x="312.42" y="73.66"/>
 </segment>
 </net>
 <net name="ADC3" class="0">
@@ -2335,14 +2330,18 @@ With round pins</description>
 <pinref part="Q6" gate="G$1" pin="D"/>
 <wire x1="215.9" y1="81.28" x2="215.9" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="215.9" y1="88.9" x2="215.9" y2="91.44" width="0.1524" layer="91"/>
-<wire x1="215.9" y1="88.9" x2="307.34" y2="88.9" width="0.1524" layer="91"/>
-<wire x1="307.34" y1="88.9" x2="307.34" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="215.9" y1="88.9" x2="287.02" y2="88.9" width="0.1524" layer="91"/>
+<wire x1="287.02" y1="88.9" x2="287.02" y2="99.06" width="0.1524" layer="91"/>
 <junction x="215.9" y="88.9"/>
-<wire x1="307.34" y1="99.06" x2="309.88" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="287.02" y1="99.06" x2="294.64" y2="99.06" width="0.1524" layer="91"/>
 <pinref part="L3" gate="G$1" pin="P$1"/>
+<wire x1="294.64" y1="99.06" x2="297.18" y2="99.06" width="0.1524" layer="91"/>
 <wire x1="198.12" y1="116.84" x2="198.12" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="198.12" y1="88.9" x2="215.9" y2="88.9" width="0.1524" layer="91"/>
 <junction x="198.12" y="116.84"/>
+<pinref part="C6" gate="G$1" pin="P$1"/>
+<wire x1="294.64" y1="91.44" x2="294.64" y2="99.06" width="0.1524" layer="91"/>
+<junction x="294.64" y="99.06"/>
 </segment>
 </net>
 <net name="N$16" class="0">
@@ -2356,14 +2355,18 @@ With round pins</description>
 <pinref part="Q8" gate="G$1" pin="D"/>
 <wire x1="264.16" y1="81.28" x2="264.16" y2="83.82" width="0.1524" layer="91"/>
 <wire x1="264.16" y1="83.82" x2="264.16" y2="91.44" width="0.1524" layer="91"/>
-<wire x1="264.16" y1="83.82" x2="307.34" y2="83.82" width="0.1524" layer="91"/>
-<wire x1="307.34" y1="83.82" x2="307.34" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="264.16" y1="83.82" x2="287.02" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="287.02" y1="83.82" x2="287.02" y2="73.66" width="0.1524" layer="91"/>
 <junction x="264.16" y="83.82"/>
-<wire x1="307.34" y1="73.66" x2="309.88" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="287.02" y1="73.66" x2="294.64" y2="73.66" width="0.1524" layer="91"/>
 <pinref part="L4" gate="G$1" pin="P$1"/>
+<wire x1="294.64" y1="73.66" x2="297.18" y2="73.66" width="0.1524" layer="91"/>
 <wire x1="248.92" y1="116.84" x2="248.92" y2="83.82" width="0.1524" layer="91"/>
 <wire x1="248.92" y1="83.82" x2="264.16" y2="83.82" width="0.1524" layer="91"/>
 <junction x="248.92" y="116.84"/>
+<pinref part="C6" gate="G$1" pin="P$2"/>
+<wire x1="294.64" y1="83.82" x2="294.64" y2="73.66" width="0.1524" layer="91"/>
+<junction x="294.64" y="73.66"/>
 </segment>
 </net>
 <net name="N$23" class="0">

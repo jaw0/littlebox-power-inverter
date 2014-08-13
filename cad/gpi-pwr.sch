@@ -1408,10 +1408,10 @@ With round pins</description>
 <parts>
 <part name="FRAME1" library="frames" deviceset="FRAME_B_L" device=""/>
 <part name="L1" library="jaw" deviceset="L" device="AIRD03" value="100u"/>
-<part name="C1" library="jaw" deviceset="C" device="R46KI333000N1M" value=".33u"/>
+<part name="C1" library="jaw" deviceset="C" device="R46KI333000N1M" value=".47u"/>
 <part name="C2" library="jaw" deviceset="C" device="MKP1848S62010JY5F" value="20u"/>
 <part name="C3" library="jaw" deviceset="C" device="2220" value=".1u"/>
-<part name="R1" library="jaw" deviceset="R" device="2512" value="1M 2kV"/>
+<part name="R1" library="jaw" deviceset="R" device="2512" value="2M 2kV"/>
 <part name="Q1" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
 <part name="Q3" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
 <part name="Q5" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
@@ -1420,10 +1420,10 @@ With round pins</description>
 <part name="Q8" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
 <part name="L3" library="jaw" deviceset="L" device="2303" value="15u"/>
 <part name="L4" library="jaw" deviceset="L" device="2303" value="15u"/>
-<part name="C6" library="jaw" deviceset="C" device="R46KI333000N1M" value=".33u"/>
-<part name="C7" library="jaw" deviceset="C" device="R46KI333000N1M" value=".33u"/>
-<part name="R5" library="jaw" deviceset="R" device="1206" value="3k"/>
-<part name="R10" library="jaw" deviceset="R" device="1206" value="3k"/>
+<part name="C6" library="jaw" deviceset="C" device="R46KI333000N1M" value=".47u"/>
+<part name="C7" library="jaw" deviceset="C" device="R46KI333000N1M" value=".47u"/>
+<part name="R5" library="jaw" deviceset="R" device="1206" value="3k3"/>
+<part name="R10" library="jaw" deviceset="R" device="0603" value="3k3"/>
 <part name="R12" library="jaw" deviceset="R" device="1206" value="600k"/>
 <part name="CN1" library="jaw" deviceset="HEADER-1X2" device="" value="HEADER-1X2"/>
 <part name="CN2" library="jaw" deviceset="HEADER-3X1" device="" value="HEADER-3X1"/>
@@ -1457,9 +1457,9 @@ With round pins</description>
 <part name="U8" library="jaw" deviceset="ACPL-P346" device="P346"/>
 <part name="GND12" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="VCCM1" library="jaw" deviceset="PWR-VCCM" device=""/>
-<part name="C13" library="jaw" deviceset="C" device="0603"/>
+<part name="C13" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="GND13" library="jaw" deviceset="PWR-GND" device=""/>
-<part name="C14" library="jaw" deviceset="C" device="0603"/>
+<part name="C14" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="D3" library="jaw" deviceset="DIODE" device="DO-214AA" value="DIODEDO-214AA"/>
 <part name="VCCM2" library="jaw" deviceset="PWR-VCCM" device=""/>
 <part name="C15" library="jaw" deviceset="C" device="0603" value="1u"/>
@@ -1507,14 +1507,14 @@ With round pins</description>
 <part name="GND21" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="VCC4" library="jaw" deviceset="PWR-VCC" device=""/>
 <part name="VCC5" library="jaw" deviceset="PWR-VCC" device=""/>
-<part name="R3" library="jaw" deviceset="R" device="1206" value="330k"/>
-<part name="R4" library="jaw" deviceset="R" device="1206" value="330k"/>
+<part name="R3" library="jaw" deviceset="R" device="1206" value="392k"/>
+<part name="R4" library="jaw" deviceset="R" device="1206" value="392k"/>
 <part name="R19" library="jaw" deviceset="R" device="0612" value="4r7"/>
 <part name="R20" library="jaw" deviceset="R" device="0612" value="4r7"/>
 <part name="R21" library="jaw" deviceset="R" device="0612" value="4r7"/>
 <part name="R22" library="jaw" deviceset="R" device="0612" value="4r7"/>
-<part name="R23" library="jaw" deviceset="R" device="0612"/>
-<part name="R24" library="jaw" deviceset="R" device="0612"/>
+<part name="R23" library="jaw" deviceset="R" device="0612" value="4r7"/>
+<part name="R24" library="jaw" deviceset="R" device="0612" value="4r7"/>
 <part name="C21" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="C22" library="jaw" deviceset="C" device="0603" value="10u"/>
 <part name="C23" library="jaw" deviceset="C" device="0603" value="1u"/>
@@ -1559,7 +1559,7 @@ With round pins</description>
 <instance part="L3" gate="G$1" x="304.8" y="99.06"/>
 <instance part="L4" gate="G$1" x="304.8" y="73.66"/>
 <instance part="C6" gate="G$1" x="294.64" y="86.36"/>
-<instance part="C7" gate="G$1" x="312.42" y="86.36"/>
+<instance part="C7" gate="G$1" x="314.96" y="86.36"/>
 <instance part="R5" gate="G$1" x="142.24" y="76.2" rot="R90"/>
 <instance part="R10" gate="G$1" x="335.28" y="86.36" rot="R180"/>
 <instance part="R12" gate="G$1" x="350.52" y="86.36" rot="R180"/>
@@ -1571,7 +1571,7 @@ With round pins</description>
 <instance part="GND5" gate="G$1" x="121.92" y="63.5"/>
 <instance part="GND6" gate="G$1" x="142.24" y="63.5"/>
 <instance part="GND9" gate="G$1" x="241.3" y="63.5"/>
-<instance part="GND10" gate="G$1" x="320.04" y="83.82"/>
+<instance part="GND10" gate="G$1" x="327.66" y="83.82"/>
 <instance part="C4" gate="G$1" x="121.92" y="86.36"/>
 <instance part="D1" gate="G$1" x="358.14" y="91.44" rot="R270"/>
 <instance part="D2" gate="G$1" x="358.14" y="81.28" rot="R90"/>
@@ -1733,7 +1733,6 @@ With round pins</description>
 </segment>
 <segment>
 <pinref part="GND10" gate="G$1" pin="GND"/>
-<wire x1="320.04" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
 <pinref part="R10" gate="G$1" pin="P$2"/>
 <wire x1="330.2" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
 </segment>
@@ -1997,10 +1996,12 @@ With round pins</description>
 <wire x1="358.14" y1="93.98" x2="358.14" y2="99.06" width="0.1524" layer="91"/>
 <junction x="358.14" y="99.06"/>
 <pinref part="L3" gate="G$1" pin="P$2"/>
-<wire x1="312.42" y1="99.06" x2="358.14" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="312.42" y1="99.06" x2="314.96" y2="99.06" width="0.1524" layer="91"/>
 <pinref part="C7" gate="G$1" pin="P$1"/>
-<wire x1="312.42" y1="91.44" x2="312.42" y2="99.06" width="0.1524" layer="91"/>
-<junction x="312.42" y="99.06"/>
+<wire x1="314.96" y1="99.06" x2="322.58" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="322.58" y1="99.06" x2="358.14" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="314.96" y1="91.44" x2="314.96" y2="99.06" width="0.1524" layer="91"/>
+<junction x="314.96" y="99.06"/>
 </segment>
 </net>
 <net name="N$25" class="0">
@@ -2014,12 +2015,13 @@ With round pins</description>
 <junction x="358.14" y="73.66"/>
 <pinref part="C7" gate="G$1" pin="P$2"/>
 <pinref part="L4" gate="G$1" pin="P$2"/>
-<wire x1="312.42" y1="73.66" x2="312.42" y2="83.82" width="0.1524" layer="91"/>
 <pinref part="R3" gate="G$1" pin="P$1"/>
 <wire x1="401.32" y1="76.2" x2="401.32" y2="73.66" width="0.1524" layer="91"/>
 <junction x="401.32" y="73.66"/>
-<wire x1="312.42" y1="73.66" x2="358.14" y2="73.66" width="0.1524" layer="91"/>
-<junction x="312.42" y="73.66"/>
+<wire x1="312.42" y1="73.66" x2="314.96" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="314.96" y1="73.66" x2="358.14" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="314.96" y1="83.82" x2="314.96" y2="73.66" width="0.1524" layer="91"/>
+<junction x="314.96" y="73.66"/>
 </segment>
 </net>
 <net name="ADC3" class="0">

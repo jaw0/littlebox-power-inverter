@@ -383,20 +383,20 @@ chip</description>
 </package>
 <package name="VIPER38-P10">
 <pad name="3" x="0" y="-3.81" drill="0.762"/>
-<pad name="2" x="-2.54" y="-3.81" drill="0.762"/>
-<pad name="4" x="2.54" y="-3.81" drill="0.762"/>
-<pad name="5" x="5.08" y="-3.81" drill="0.762"/>
+<pad name="2" x="-1.77" y="-3.81" drill="0.762"/>
+<pad name="4" x="1.77" y="-3.81" drill="0.762"/>
+<pad name="5" x="3.54" y="-3.81" drill="0.762"/>
 <pad name="8" x="0" y="3.81" drill="0.762"/>
-<pad name="7" x="2.54" y="3.81" drill="0.762"/>
-<pad name="6" x="5.08" y="3.81" drill="0.762"/>
-<pad name="9" x="-2.54" y="3.81" drill="0.762"/>
-<pad name="10" x="-5.08" y="3.81" drill="0.762"/>
-<pad name="1" x="-5.08" y="-3.81" drill="0.762" shape="square"/>
-<wire x1="-6.35" y1="3.81" x2="6.35" y2="3.81" width="0.127" layer="21"/>
-<wire x1="6.35" y1="3.81" x2="6.35" y2="-3.81" width="0.127" layer="21"/>
-<wire x1="6.35" y1="-3.81" x2="-5.08" y2="-3.81" width="0.127" layer="21"/>
-<wire x1="-6.35" y1="-2.54" x2="-6.35" y2="3.81" width="0.127" layer="21"/>
-<wire x1="-6.35" y1="-2.54" x2="-5.08" y2="-3.81" width="0.127" layer="21"/>
+<pad name="7" x="1.77" y="3.81" drill="0.762"/>
+<pad name="6" x="3.54" y="3.81" drill="0.762"/>
+<pad name="9" x="-1.77" y="3.81" drill="0.762"/>
+<pad name="10" x="-3.54" y="3.81" drill="0.762"/>
+<pad name="1" x="-3.54" y="-3.81" drill="0.762" shape="square"/>
+<wire x1="-5.25" y1="3.81" x2="5.25" y2="3.81" width="0.127" layer="21"/>
+<wire x1="5.25" y1="3.81" x2="5.25" y2="-3.81" width="0.127" layer="21"/>
+<wire x1="5.25" y1="-3.81" x2="-4.08" y2="-3.81" width="0.127" layer="21"/>
+<wire x1="-5.25" y1="-2.54" x2="-5.25" y2="3.81" width="0.127" layer="21"/>
+<wire x1="-5.25" y1="-2.54" x2="-4.08" y2="-3.81" width="0.127" layer="21"/>
 <text x="-6.35" y="-2.54" size="1.27" layer="25" rot="R90">&gt;NAME</text>
 </package>
 <package name="SMD2512">
@@ -466,9 +466,15 @@ chip</description>
 <package name="BOURNS2100">
 <pad name="P$1" x="-9.4" y="0" drill="0.8" diameter="1.6"/>
 <pad name="P$2" x="9.4" y="0" drill="0.8" diameter="1.6"/>
-<circle x="0" y="0" radius="11" width="0.2" layer="21"/>
+<circle x="0" y="0" radius="10.5" width="0.2" layer="21"/>
 <text x="-2" y="-4" size="1" layer="25" ratio="10">&gt;NAME</text>
 <text x="-2" y="-6" size="1" layer="27" ratio="10">&gt;VALUE</text>
+<wire x1="-12" y1="1.5" x2="-12" y2="-1.5" width="0.1" layer="21"/>
+<wire x1="12" y1="1.5" x2="12" y2="-1.5" width="0.1" layer="21"/>
+<wire x1="-12" y1="1.5" x2="-10.5" y2="1.5" width="0.1" layer="21"/>
+<wire x1="-12" y1="-1.5" x2="-10.5" y2="-1.5" width="0.1" layer="21"/>
+<wire x1="12" y1="1.5" x2="10.5" y2="1.5" width="0.1" layer="21"/>
+<wire x1="12" y1="-1.5" x2="10.5" y2="-1.5" width="0.1" layer="21"/>
 </package>
 </packages>
 <symbols>
@@ -1040,7 +1046,7 @@ LOGO</text>
 <part name="L1" library="jaw" deviceset="L" device="2100" value="330u"/>
 <part name="C2" library="jaw" deviceset="C" device="0603" value="10u"/>
 <part name="C3" library="jaw" deviceset="C" device="0603" value=".01u"/>
-<part name="C4" library="jaw" deviceset="C" device="0603" value="1"/>
+<part name="C4" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="R2" library="jaw" deviceset="R" device="0603" value="10k"/>
 <part name="R3" library="jaw" deviceset="R" device="0603" value="3k"/>
 <part name="D4" library="jaw" deviceset="ZENER" device="" value="15V"/>
@@ -1048,7 +1054,7 @@ LOGO</text>
 <part name="CN2" library="jaw" deviceset="HEADER-1X2" device=".4" value="HEADER-1X2.4"/>
 <part name="GND3" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="GND4" library="jaw" deviceset="PWR-GND" device=""/>
-<part name="R4" library="jaw" deviceset="R" device="1206" value="590k 500V"/>
+<part name="R4" library="jaw" deviceset="R" device="1206" value="590k"/>
 <part name="R5" library="jaw" deviceset="R" device="0603" value="3k"/>
 <part name="GND6" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="U$1" library="jaw" deviceset="ROBOTMAN-LOGO" device=""/>

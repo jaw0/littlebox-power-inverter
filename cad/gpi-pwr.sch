@@ -434,8 +434,8 @@ chip</description>
 <text x="-2" y="2" size="1" layer="27" ratio="10">&gt;VALUE</text>
 </package>
 <package name="BOURNS2303">
-<pad name="P$1" x="-5.842" y="0" drill="1.778" diameter="3.556"/>
-<pad name="P$2" x="5.842" y="0" drill="1.778" diameter="3.556"/>
+<pad name="P$1" x="-7" y="0" drill="1.778" diameter="3.556"/>
+<pad name="P$2" x="7" y="0" drill="1.778" diameter="3.556"/>
 <wire x1="-8.255" y1="15.24" x2="8.255" y2="15.24" width="0.254" layer="21" style="shortdash"/>
 <wire x1="8.255" y1="15.24" x2="8.255" y2="7.62" width="0.254" layer="21"/>
 <wire x1="8.255" y1="7.62" x2="8.255" y2="-7.62" width="0.254" layer="21"/>
@@ -657,6 +657,19 @@ DOWN</text>
 <wire x1="5.08" y1="2.54" x2="5.08" y2="-2.54" width="0.127" layer="21"/>
 <wire x1="5.08" y1="-2.54" x2="-5.08" y2="-2.54" width="0.127" layer="21"/>
 <wire x1="-5.08" y1="-2.54" x2="-5.08" y2="2.54" width="0.127" layer="21"/>
+</package>
+<package name="BOURNS2100">
+<pad name="P$1" x="-9.4" y="0" drill="0.8" diameter="1.6"/>
+<pad name="P$2" x="9.4" y="0" drill="0.8" diameter="1.6"/>
+<circle x="0" y="0" radius="10.5" width="0.2" layer="21"/>
+<text x="-2" y="-4" size="1" layer="25" ratio="10">&gt;NAME</text>
+<text x="-2" y="-6" size="1" layer="27" ratio="10">&gt;VALUE</text>
+<wire x1="-12" y1="1.5" x2="-12" y2="-1.5" width="0.1" layer="21"/>
+<wire x1="12" y1="1.5" x2="12" y2="-1.5" width="0.1" layer="21"/>
+<wire x1="-12" y1="1.5" x2="-10.5" y2="1.5" width="0.1" layer="21"/>
+<wire x1="-12" y1="-1.5" x2="-10.5" y2="-1.5" width="0.1" layer="21"/>
+<wire x1="12" y1="1.5" x2="10.5" y2="1.5" width="0.1" layer="21"/>
+<wire x1="12" y1="-1.5" x2="10.5" y2="-1.5" width="0.1" layer="21"/>
 </package>
 </packages>
 <symbols>
@@ -914,6 +927,15 @@ LOGO</text>
 </technologies>
 </device>
 <device name="2303" package="BOURNS2303">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="2100" package="BOURNS2100">
 <connects>
 <connect gate="G$1" pin="P$1" pad="P$1"/>
 <connect gate="G$1" pin="P$2" pad="P$2"/>
@@ -1422,7 +1444,7 @@ With round pins</description>
 <part name="L4" library="jaw" deviceset="L" device="2303" value="15u"/>
 <part name="C6" library="jaw" deviceset="C" device="R46KI333000N1M" value=".47u"/>
 <part name="C7" library="jaw" deviceset="C" device="R46KI333000N1M" value=".47u"/>
-<part name="R5" library="jaw" deviceset="R" device="1206" value="3k3"/>
+<part name="R5" library="jaw" deviceset="R" device="0603" value="3k3"/>
 <part name="R10" library="jaw" deviceset="R" device="0603" value="3k3"/>
 <part name="R12" library="jaw" deviceset="R" device="1206" value="600k"/>
 <part name="CN1" library="jaw" deviceset="HEADER-1X2" device="" value="HEADER-1X2"/>
@@ -1501,8 +1523,8 @@ With round pins</description>
 <part name="JP1" library="adafruit" deviceset="PINHD-1X1" device=""/>
 <part name="U9" library="jaw" deviceset="TEMPERATURE" device=""/>
 <part name="U10" library="jaw" deviceset="TEMPERATURE" device=""/>
-<part name="C19" library="jaw" deviceset="C" device="0603"/>
-<part name="C20" library="jaw" deviceset="C" device="0603"/>
+<part name="C19" library="jaw" deviceset="C" device="0603" value=".1u"/>
+<part name="C20" library="jaw" deviceset="C" device="0603" value=".1u"/>
 <part name="GND7" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="GND21" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="VCC4" library="jaw" deviceset="PWR-VCC" device=""/>
@@ -1515,8 +1537,8 @@ With round pins</description>
 <part name="R22" library="jaw" deviceset="R" device="0612" value="4r7"/>
 <part name="R23" library="jaw" deviceset="R" device="0612" value="4r7"/>
 <part name="R24" library="jaw" deviceset="R" device="0612" value="4r7"/>
-<part name="C21" library="jaw" deviceset="C" device="0603" value="1u"/>
-<part name="C22" library="jaw" deviceset="C" device="0603" value="10u"/>
+<part name="C21" library="jaw" deviceset="C" device="0603" value="1u 25V"/>
+<part name="C22" library="jaw" deviceset="C" device="0603" value="10u 25V"/>
 <part name="C23" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="C24" library="jaw" deviceset="C" device="0603" value="10u"/>
 <part name="VCC6" library="jaw" deviceset="PWR-VCC" device=""/>

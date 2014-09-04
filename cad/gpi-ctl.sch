@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
@@ -605,6 +605,7 @@ chip</description>
 <wire x1="-1" y1="1.5" x2="1" y2="1.5" width="0.1" layer="21"/>
 <wire x1="1" y1="1.5" x2="1" y2="2.75" width="0.1" layer="21"/>
 <text x="-3" y="3" size="1" layer="25" ratio="10">&gt;NAME</text>
+<wire x1="-3.7" y1="-1.9" x2="-2.9" y2="-2.7" width="0.127" layer="21"/>
 </package>
 <package name="SMD1206">
 <smd name="1" x="-1.4" y="0" dx="1.6" dy="2" layer="1"/>
@@ -3714,7 +3715,7 @@ Source: http://www.osram.convergy.de/</description>
 <part name="D1" library="jaw" deviceset="DIODE" device="SOD-323"/>
 <part name="VCC14" library="jaw" deviceset="PWR-VCC" device=""/>
 <part name="VREG1" library="jaw" deviceset="REGULATOR" device="ROF" value=" ROF-78E3.3-0.5"/>
-<part name="C1" library="jaw" deviceset="C" device="0603" value="10u"/>
+<part name="C1" library="jaw" deviceset="C" device="0603" value="10u 25V"/>
 <part name="C2" library="jaw" deviceset="C" device="1210" value="100u"/>
 <part name="C3" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="C4" library="jaw" deviceset="C" device="0603" value="10u"/>
@@ -3761,9 +3762,9 @@ Source: http://www.osram.convergy.de/</description>
 <part name="GND6" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="VCC5" library="jaw" deviceset="PWR-VCC" device=""/>
 <part name="SW1" library="jaw" deviceset="SWITCH" device="GT12-THOLE"/>
-<part name="LED1" library="adafruit" deviceset="LED" device="3MM"/>
-<part name="LED2" library="adafruit" deviceset="LED" device="3MM"/>
-<part name="LED3" library="adafruit" deviceset="LED" device="3MM"/>
+<part name="LED1" library="adafruit" deviceset="LED" device="3MM" value="green"/>
+<part name="LED2" library="adafruit" deviceset="LED" device="3MM" value="red"/>
+<part name="LED3" library="adafruit" deviceset="LED" device="3MM" value="white"/>
 <part name="C25" library="jaw" deviceset="C" device="0603" value=".1u"/>
 <part name="VCC6" library="jaw" deviceset="PWR-VCC" device=""/>
 <part name="GND11" library="jaw" deviceset="PWR-GND" device=""/>

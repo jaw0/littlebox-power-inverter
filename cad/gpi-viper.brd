@@ -8,7 +8,7 @@
 </settings>
 <grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="10" display="yes" altdistance="0.1" altunitdist="mm" altunit="mm"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="yes"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="yes"/>
@@ -644,7 +644,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="NAME" x="50.522" y="2.916" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="46.722" y="1.414" size="1" layer="27" font="vector" ratio="10"/>
 </element>
-<element name="U$1" library="jaw" package="ROBOTMAN-LOGO" value="ROBOTMAN-LOGO" x="48" y="9.6" rot="MR0"/>
+<element name="U$1" library="jaw" package="ROBOTMAN-LOGO" value="ROBOTMAN-LOGO" x="48" y="9.6"/>
 <element name="CN1" library="adafruit" package="1X04-BIG" value="1X4-BIG" x="62.5" y="4" smashed="yes">
 <attribute name="NAME" x="61.1538" y="5.8288" size="1.27" layer="25" ratio="10" display="off"/>
 <attribute name="VALUE" x="61.23" y="0.825" size="1.27" layer="27"/>

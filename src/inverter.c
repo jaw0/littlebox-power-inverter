@@ -65,10 +65,26 @@ static void ready_hbridge(void);
 
 /****************************************************************/
 
+/*
+  [2s	- double size
+
+  [14m	- 6x10
+  [15m	- 6x12
+  [16m	- 9x15
+  [17m	- 10x20
+*/
+
 static inline void
 printbig(const char *msg){
-    printf("\e[J\e[16m%s", msg);
+    printf("\e[J\e[15mArea791RL - inverter\n\e[17m%s\n", msg);
+    // printf("\e[J\e[15m\e[2s%s\e[1s", msg);
 }
+
+static inline void
+print_ready(void){
+    printbig("READY");
+}
+
 
 static void
 update_state(void){
@@ -77,6 +93,7 @@ update_state(void){
     static int8_t  diag_counter   = 0;
 
     int sw = gpio_get( HW_GPIO_SWITCH );
+    blinky_override = 0;
 
     switch( inv_state ){
     case INV_STATE_OFF:
@@ -85,6 +102,8 @@ update_state(void){
         if( sw ){
             ondelay_until = get_time() + ONDELAY;
             inv_state = INV_STATE_ONDELAY;
+            blinky_override = 1;
+            set_led_white(255);
             play(ivolume, "c+3"); 	// debounce delay
             printbig("STARTING...\n");
             syslog("switch on");
@@ -92,12 +111,15 @@ update_state(void){
         break;
 
     case INV_STATE_ONDELAY:
+
         if( !sw ){
             inv_state = INV_STATE_OFF;
             play(ivolume, "a-3");
             diag_counter ++;
             diag_last = get_time();
             printbig("OFF\n");
+            usleep(500000);
+            print_ready();
             syslog("canceled");
         }else if( get_time() >= ondelay_until ){
             ready_hbridge();
@@ -109,9 +131,12 @@ update_state(void){
             syslog("ac active");
         }else{
             // flash + chirp; 2Hz
+            blinky_override = 1;
             set_led_green(127);
+            set_led_white(0);
             play(ivolume, "b+5>>");
             set_led_green(0);
+            set_led_white(127);
             usleep(437500);
         }
         break;
@@ -146,6 +171,8 @@ update_state(void){
                 play(ivolume, "f-3");
                 printbig("AC OFF\n");
                 syslog("ac disabled");
+                usleep(500000);
+                print_ready();
             }
         }
         break;
@@ -492,6 +519,8 @@ inverter_mon(void){
     STDOUT = f;
     STDIN  = 0;
 
+    print_ready();
+
     while(1){
         update_fans();
         update_state();
@@ -509,7 +538,7 @@ inverter_mon(void){
 void
 init_inverter(void){
 
-    bootmsg(" inverter");
+    // bootmsg("hw init: inverter\n");
     start_proc( 8192, inverter_mon, "invmon" );
     start_proc( 8192, inverter_ctl, "invctl" );
 
@@ -570,7 +599,6 @@ DEFUN(testswitch, "test switch")
 DEFUN(testsenstiming, "test sensor timing")
 {
     int i;
-    init_sensors();
     cycle_step = 0;
 
     ui_pause();

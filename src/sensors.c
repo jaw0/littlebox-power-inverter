@@ -56,7 +56,6 @@ static short adcstate;
 #define SEN_7		HW_ADC_TEMPER_2
 #define SEN_8		HW_ADC_TEMPER_3
 
-
 /****************************************************************/
 
 // recent sensor values
@@ -69,163 +68,13 @@ static struct SensorData sensor_data[9];
 
 /****************************************************************/
 
-static void
-_enable_dma(int cnt){
-
-    DROP_CRUMB("ena dma", 0,0);
-
-    DMAC->CR   &= ~1;	// clear EN first
-    DMAC->PAR   = (u_long) & ADC->CDR;
-    DMAC->M0AR  = (u_long) & dmabuf;
-    DMAC->CR   &= (0xF<<28) | (1<<20);
-
-    DMAC->NDTR  = cnt;
-    DMAC->CR   |= DMASCR_TEIE | DMASCR_TCIE | DMASCR_MINC
-        | (0<<25)	// channel 0
-        | (3<<16) 	// high prio
-        | (2<<13)	// 32 bit memory
-        | (2<<11)	// 32 bit periph
-        ;
-
-    ADC->CCR |= 2<<14;	// dma mode 2
-
-    DMAC->CR |= 1;	// enable
-
-}
-
-static void
-_disable_dma(void){
-
-    ADC->CCR &= ~(3<<14);	// dma mode
-    DMAC->CR &= ~(DMASCR_EN | DMASCR_TEIE | DMASCR_TCIE);
-    DMA2->LIFCR |= 0x3C;	// clear irq
-    DROP_CRUMB("dis dma", 0,0);
-
-}
-
-//#define ADC_DMA
-
-// no DMA - 20 usec (samp=1)
-// DMA - XXX
-
-// configure for dual simultaneous sequenced ADC with DMA
-static void
-_adc_init(void){
-#ifdef ADC_DMA
-    ADC1->CR1 |= 1<<8;		// scan mode
-    ADC2->CR1 |= 1<<8;
-
-    ADC->CCR  |= 6		// simultaneous regular mode
-        | (1<<13)		// dma select
-        ;
-
-    RCC->AHB1ENR |= 1<<22;	// DMA2
-    nvic_enable( IRQ_DMA2_STREAM0, 0x20 );
-
-    // RSN - OVR interrupt + handle
-#endif
-}
-
-
-static void
-adc_get_all(int sr){
-    int i=0, n=0;
-
-    sync_lock( &adclock, "adc.L" );
-
-    int v = ADC1->DR;	// clear any previous result
-    v = ADC2->DR;
-#ifdef ADC_DMA
-    RESET_CRUMBS();
-    bzero(dmabuf, sizeof(dmabuf));
-
-    ADC1->SR &= ~ SR_OVR;
-    ADC2->SR &= ~ SR_OVR;
-
-    ADC1->SQR3 = (SEN_0 & 0x1F) | ((SEN_2 & 0x1f)<<5) | ((SEN_4 & 0x1f)<<10) | ((SEN_0 & 0x1F)<<15) | ((SEN_2 & 0x1F)<<20) | ((SEN_4 & 0x1F)<<25);
-    ADC2->SQR3 = (SEN_1 & 0x1F) | ((SEN_3 & 0x1f)<<5) | ((sr & 0x1f)<<10)    | ((SEN_1 & 0x1F)<<15) | ((SEN_3 & 0x1F)<<20) | ((sr & 0x1F)<<25);
-
-    ADC1->SQR2 = (SEN_0 & 0x1F) | ((SEN_2 & 0x1f)<<5) | ((SEN_4 & 0x1f)<<10);
-    ADC2->SQR2 = (SEN_1 & 0x1F) | ((SEN_3 & 0x1f)<<5) | ((sr & 0x1f)<<10);
-
-    ADC1->SQR1 = (9-1)<<20;	// 9 conversions
-    ADC2->SQR1 = (9-1)<<20;
-
-    _enable_dma(9);
-    adcstate = ADC_BUSY;
-    DROP_CRUMB("adc start", 0,0);
-
-    ADC1->CR2 |= CR2_SWSTART;
-
-    // tsleep
-    while( adcstate == ADC_BUSY ){
-        if( currproc ){
-            int err = tsleep( &adc_get_all, -1, "adc", 1000);
-            if( err ){
-                DROP_CRUMB("toed", err, ADC->CSR);
-                adcstate = ADC_ERROR;
-            }
-            printf("adc: %d, %d, tr %d %d\n", err, adcstate, (int)currproc->timeout, (int)get_time());
-            usleep(10000);
-        }
-    }
-
-    _disable_dma();
-
-    if( adcstate == ADC_ERROR ){
-        printf("adc error\n");
-        DUMP_CRUMBS();
-    }
-#else
-
-    // works ok. 205us
-    for(i=0; i<3; i++){
-        n = adc_get2( SEN_0, SEN_1 );
-        dmabuf[6*i + 0] = n & 0xFFFF;
-        dmabuf[6*i + 1] = n >> 16;
-
-        n = adc_get2( SEN_2, SEN_3 );
-        dmabuf[6*i + 2] = n & 0xFFFF;
-        dmabuf[6*i + 3] = n >> 16;
-
-        n = adc_get2( SEN_4, sr );
-        dmabuf[6*i + 4] = n & 0xFFFF;
-        dmabuf[6*i + 5] = n >> 16;
-
-    }
-#endif
-
-    sync_unlock( &adclock );
-}
-
-void
-DMA2_Stream0_IRQHandler(void){
-    int isr = DMA2->LISR & 0x3F;
-    DMA2->LIFCR |= 0x3C;	// clear irq
-
-    DROP_CRUMB("dmairq", isr, 0);
-    if( isr & 8 ){
-        // error - done
-        _disable_dma();
-        adcstate = ADC_ERROR;
-        DROP_CRUMB("dma-err", 0,0);
-        wakeup( &adc_get_all );
-        return;
-    }
-
-    if( isr & 0x20 ){
-        // dma complete
-        if( ((u_long)dmabuf == DMAC->M0AR) && ! DMAC->NDTR ){
-            _disable_dma();
-            adcstate = ADC_DONE;
-            DROP_CRUMB("dma-done", 0,0);
-            wakeup( &adc_get_all );
-        }
-    }
-}
-
+#include "adc_wait.c"
+//#include "adc_asyncirq.c"	- too slow
+//#include "adc_syncirq.c"	- overruns
+//#include "adc_dma.c"		- overruns
 
 /****************************************************************/
+
 
 static void
 median_filter(struct SensorData *sd){
@@ -259,16 +108,17 @@ read_sensors(void){
     case 3: sr = SEN_8; break;
     }
 
-    adc_get_all(sr);
+    adc_get_all(sr, 5+r);
 
     // unbundle data
     int8_t i,j;
     for(i=0; i<6; i++){
         int si = (i==5) ? 5 + r : i;
+#ifdef USE_DMABUF
         for(j=0; j<3; j++){
             sensor_data[si].hist[j] = dmabuf[j*6+i];
         }
-
+#endif
         median_filter(sensor_data + si);
     }
 }
@@ -299,9 +149,17 @@ int get_curr_temp3(void){ return temperature(sensor_data[8].val); }
 
 DEFUN(testsensors, "test sensors")
 {
+    short i, j;
+
     while(1){
         read_sensors();
-        hexdump(dmabuf, 36 );
+        for(i=0; i<3; i++){
+            for(j=0; j<9; j++){
+                printf("%04.4x ", sensor_data[j].hist[i]);
+            }
+            printf("\n");
+        }
+        printf("\n");
         sleep(1);
     }
 }

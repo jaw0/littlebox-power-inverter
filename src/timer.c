@@ -34,7 +34,7 @@ init_timer(void){
     bootmsg(" timer");
 
     RCC->APB1ENR |= 1<<5;	// T7
-    nvic_enable(55, 0x30);	// T7
+    nvic_enable(55, 0x60);	// T7
 
     TIMER->SR &= ~1;
     TIMER->DIER = 1;		// interrupt enable

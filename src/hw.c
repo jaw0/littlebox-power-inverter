@@ -62,7 +62,7 @@ update_pwm_freq(void){
 void
 hw_init(void){
 
-    bootmsg("hw init");
+    bootmsg("hw init:");
 
     // enable i+d cache, prefecth=off => faster + lower adc noise
     // nb: prefetch=on => more faster, less power, more noise
@@ -98,15 +98,8 @@ hw_init(void){
     init_sensors();
     init_timer();
     init_imu();
-    init_inverter();	// start me last
     bootmsg("\n");
 
-    if( run_script("bootdata.rc") ){
-        // could not run rc - play warning tone
-        play(32, "[3 d+4>>d-4>> ]");
-    }
-    ui_f_updateboot(0,0,0);
-    mkdir("log");
 }
 
 void
@@ -146,10 +139,20 @@ onpanic(const char *msg){
 void
 main(void){
 
-    hw_init();
+    if( run_script("bootdata.rc") ){
+        // could not run rc - play warning tone
+        play(32, "[3 d+4>>d-4>> ]");
+    }
+    ui_f_updateboot(0,0,0);
+    mkdir("log");
 
     extern void blinky(void);
     start_proc( 1024, blinky, "blinky" );
+
+    // finally, start the inverter
+    init_inverter();
+
+    run_script("startup.rc");
 
     // return to shell
 }

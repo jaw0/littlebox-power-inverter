@@ -95,6 +95,7 @@ extern int  battery_voltage(void), battery_current(void);
 
 extern int volume_setting, volume, ivolume;
 extern const char const *songs[];
+extern int blinky_override;
 extern char _ccmem[];
 
 

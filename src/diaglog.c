@@ -64,6 +64,7 @@ static u_char bbuf[BUFSIZE];
 #define LRT_CYCLE	6
 #define LRT_CTL		7
 #define LRT_USER	8
+#define LRT_STATS	9
 #define LRT_STAMP	12
 #define LRT_SLOW        13
 #define LRT_TAG		14
@@ -84,6 +85,11 @@ struct cycle_dat {
     short ii_ave, ii_min, ii_max;
     short vh_ave, vh_min, vh_max;
     short itarg;
+};
+
+struct stats_dat {
+    short vi_ave, vo_ave;
+    short ii_ave, io_ave;
 };
 
 struct env_dat {
@@ -150,7 +156,7 @@ _log_version(void){
 
 static void
 _log_sensor(void){
-    if( !ROOMFOR(10) ) return;
+    if( !ROOMFOR(11) ) return;
     _lock();
     u_char *lc = logmem + logpos;
     lc[0] = MKTAG(LRT_SENSOR, LRL_10B);
@@ -172,6 +178,32 @@ _show_sensor(FILE *f){
 
     fprintf(f, "sensor\tvi=%d i=%d vo=%d io=%d vh=%d",
             p->vi, p->ii, p->vo, p->io, p->vh
+    );
+}
+
+static void
+_log_stats(void){
+    if( !ROOMFOR(9) ) return;
+    _lock();
+    u_char *lc = logmem + logpos;
+    lc[0] = MKTAG(LRT_STATS, LRL_8B);
+
+    struct stats_dat *d = (struct stats_dat*)(lc + 1);
+    d->vi_ave = pcy_vi_ave;
+    d->vo_ave = pcy_vo_ave;
+    d->ii_ave = pcy_ii_ave;
+    d->io_ave = pcy_io_ave;
+
+    logpos += 9;
+    _unlock();
+}
+
+static inline void
+_show_stats(FILE *f){
+    struct stats_dat *p = (struct stats_dat*)bbuf;
+
+    fprintf(f, "stats\tvi=%d vo=%d ii=%d io=%d",
+            p->vi_ave, p->vo_ave, p->ii_ave, p->io_ave
     );
 }
 
@@ -470,18 +502,32 @@ syslog(const char *fmt, ...){
 void
 diaglog(int tag){
 
-    if( logmode == 2 ) return;
+    // 3 => off
+    if( logmode == 3 ) return;
 
+    // 1 => hi res
     if( logmode == 1 ){
         // high-res mode
         _log_tag(tag);
         _log_control();
         _log_sensor();
         _log_cycle();
+        _log_stats();
         _log_env();
         _log_accel();
         _log_gyro();
         _log_slow();
+        return;
+    }
+
+    // 2 => lo res
+    if( logmode == 2 ){
+        if( !(logstep++ % 21000) ){
+            _log_stamp();
+            _log_cycle();
+            _log_stats();
+            _log_env();
+        }
         return;
     }
 
@@ -492,10 +538,11 @@ diaglog(int tag){
 
         if( !hcs ) _log_cycle();
         _log_sensor();
-        if( !(logstep % 10) )   _log_control();
-        if( !(logstep % 3500) ) _log_env();
+        if( !(cycle_step % 10) )  _log_control();
+        if( !(logstep % 21000) )  _log_env();
     }else{
         if( !(logstep % 21000) ){
+            _log_stamp();
             _log_sensor();
             _log_env();
         }
@@ -551,6 +598,7 @@ diaglog_dump(int mask, FILE *fin, FILE *fout){
         case LRT_GYRO:		_show_gyro(fout);	break;
         case LRT_ACCEL:		_show_accel(fout);	break;
         case LRT_STAMP:		_show_stamp(fout);	break;
+        case LRT_STATS:		_show_stats(fout);	break;
         case LRT_CYCLE:		_show_cycle(fout);	break;
         case LRT_ENV:		_show_env(fout);	break;
         case LRT_SLOW:		_show_slow(fout);	break;
@@ -645,6 +693,11 @@ diaglog_hires(void){
 
 void
 diaglog_quiet(void){
+    logmode = 3;
+}
+
+void
+diaglog_lores(void){
     logmode = 2;
 }
 

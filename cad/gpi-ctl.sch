@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.0.1">
+<eagle version="7.1.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
@@ -903,6 +903,26 @@ chip</description>
 <rectangle x1="-1.2" y1="0.85" x2="-0.7" y2="1.5" layer="51"/>
 <circle x="-1" y="-0.3" radius="0.2" width="0.127" layer="21"/>
 </package>
+<package name="SMD0612">
+<smd name="P$1" x="0" y="0.8" dx="3.2" dy="0.8" layer="1"/>
+<smd name="P$2" x="0" y="-0.8" dx="3.2" dy="0.8" layer="1"/>
+<wire x1="-1.8" y1="1.4" x2="1.8" y2="1.4" width="0.1" layer="21"/>
+<wire x1="1.8" y1="1.4" x2="1.8" y2="-1.4" width="0.1" layer="21"/>
+<wire x1="1.8" y1="-1.4" x2="-1.8" y2="-1.4" width="0.1" layer="21"/>
+<wire x1="-1.8" y1="-1.4" x2="-1.8" y2="1.4" width="0.1" layer="21"/>
+<text x="-1.8" y="1.6" size="1" layer="25" ratio="10">&gt;NAME</text>
+<text x="-2" y="-2.5" size="1" layer="27" ratio="10">&gt;VALUE</text>
+</package>
+<package name="SMD0508">
+<smd name="P$1" x="-0.5" y="0" dx="2" dy="0.5" layer="1" rot="R90"/>
+<smd name="P$2" x="0.5" y="0" dx="2" dy="0.5" layer="1" rot="R90"/>
+<wire x1="-1" y1="1.25" x2="1" y2="1.25" width="0.1" layer="21"/>
+<wire x1="1" y1="1.25" x2="1" y2="-1.25" width="0.1" layer="21"/>
+<wire x1="1" y1="-1.25" x2="-1" y2="-1.25" width="0.1" layer="21"/>
+<wire x1="-1" y1="-1.25" x2="-1" y2="1.25" width="0.1" layer="21"/>
+<text x="-1.75" y="1.75" size="1" layer="25" ratio="10">&gt;NAME</text>
+<text x="-2" y="-2.5" size="1" layer="27" ratio="10">&gt;VALUE</text>
+</package>
 </packages>
 <symbols>
 <symbol name="STM32F4">
@@ -1529,6 +1549,24 @@ LOGO</text>
 </technologies>
 </device>
 <device name="2512" package="SMD2512">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="0612" package="SMD0612">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="SMD0508" package="SMD0508">
 <connects>
 <connect gate="G$1" pin="P$1" pad="P$1"/>
 <connect gate="G$1" pin="P$2" pad="P$2"/>
@@ -3807,6 +3845,8 @@ Source: http://www.osram.convergy.de/</description>
 <part name="J4" library="adafruit" deviceset="1X4" device="-BIG"/>
 <part name="VCC13" library="jaw" deviceset="PWR-VCC" device=""/>
 <part name="GND21" library="jaw" deviceset="PWR-GND" device=""/>
+<part name="R15" library="jaw" deviceset="R" device="0603"/>
+<part name="C38" library="jaw" deviceset="C" device="0603"/>
 </parts>
 <sheets>
 <sheet>
@@ -3965,6 +4005,8 @@ Source: http://www.osram.convergy.de/</description>
 <instance part="J4" gate="G$1" x="355.6" y="182.88"/>
 <instance part="VCC13" gate="G$1" x="332.74" y="190.5"/>
 <instance part="GND21" gate="G$1" x="332.74" y="175.26"/>
+<instance part="R15" gate="G$1" x="93.98" y="251.46"/>
+<instance part="C38" gate="G$1" x="101.6" y="246.38"/>
 </instances>
 <busses>
 </busses>
@@ -4245,6 +4287,8 @@ Source: http://www.osram.convergy.de/</description>
 <wire x1="71.12" y1="248.92" x2="71.12" y2="243.84" width="0.1524" layer="91"/>
 <wire x1="71.12" y1="243.84" x2="81.28" y2="243.84" width="0.1524" layer="91"/>
 <junction x="81.28" y="243.84"/>
+<pinref part="C38" gate="G$1" pin="P$2"/>
+<wire x1="101.6" y1="243.84" x2="81.28" y2="243.84" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="J1" gate="A" pin="P$1"/>
@@ -5325,9 +5369,12 @@ Source: http://www.osram.convergy.de/</description>
 <label x="210.82" y="144.78" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U4" gate="G$1" pin="OUT"/>
-<wire x1="88.9" y1="251.46" x2="93.98" y2="251.46" width="0.1524" layer="91"/>
-<label x="91.44" y="251.46" size="1.778" layer="95"/>
+<pinref part="R15" gate="G$1" pin="P$2"/>
+<pinref part="C38" gate="G$1" pin="P$1"/>
+<wire x1="99.06" y1="251.46" x2="101.6" y2="251.46" width="0.1524" layer="91"/>
+<wire x1="101.6" y1="251.46" x2="109.22" y2="251.46" width="0.1524" layer="91"/>
+<junction x="101.6" y="251.46"/>
+<label x="106.68" y="251.46" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IOC1" class="0">
@@ -5361,6 +5408,12 @@ Source: http://www.osram.convergy.de/</description>
 <wire x1="335.28" y1="73.66" x2="332.74" y2="73.66" width="0.1524" layer="91"/>
 <wire x1="332.74" y1="73.66" x2="332.74" y2="76.2" width="0.1524" layer="91"/>
 <junction x="332.74" y="76.2"/>
+</segment>
+</net>
+<net name="N$9" class="0">
+<segment>
+<pinref part="U4" gate="G$1" pin="OUT"/>
+<pinref part="R15" gate="G$1" pin="P$1"/>
 </segment>
 </net>
 </nets>

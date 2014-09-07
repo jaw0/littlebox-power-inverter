@@ -923,6 +923,42 @@ chip</description>
 <text x="-1.75" y="1.75" size="1" layer="25" ratio="10">&gt;NAME</text>
 <text x="-2" y="-2.5" size="1" layer="27" ratio="10">&gt;VALUE</text>
 </package>
+<package name="M127-1X2-THM">
+<pad name="P$1" x="-1.27" y="0" drill="0.508" diameter="0.889"/>
+<pad name="P$2" x="0" y="0" drill="0.508" diameter="0.889"/>
+<wire x1="-1.905" y1="0.635" x2="0.635" y2="0.635" width="0.127" layer="21"/>
+<wire x1="0.635" y1="0.635" x2="0.635" y2="-0.635" width="0.127" layer="21"/>
+<wire x1="0.635" y1="-0.635" x2="-1.905" y2="-0.635" width="0.127" layer="21"/>
+<wire x1="-1.905" y1="-0.635" x2="-1.905" y2="0.635" width="0.127" layer="21"/>
+<text x="-1.905" y="0.635" size="0.635" layer="25">&gt;NAME</text>
+</package>
+<package name="HEADER-1X2-THM-TIGHT">
+<pad name="P$1" x="-1.27" y="0" drill="0.762"/>
+<pad name="P$2" x="1.27" y="0" drill="0.762"/>
+<wire x1="-2.286" y1="1.016" x2="2.286" y2="1.016" width="0.127" layer="21"/>
+<wire x1="2.286" y1="1.016" x2="2.286" y2="-1.016" width="0.127" layer="21"/>
+<wire x1="2.286" y1="-1.016" x2="-2.286" y2="-1.016" width="0.127" layer="21"/>
+<wire x1="-2.286" y1="-1.016" x2="-2.286" y2="1.016" width="0.127" layer="21"/>
+<text x="-2.54" y="1.27" size="1.27" layer="25">&gt;NAME</text>
+</package>
+<package name="HEADER-1X2-THM-WIDE">
+<pad name="1" x="-2.54" y="0" drill="1.016"/>
+<pad name="2" x="2.54" y="0" drill="1.016"/>
+<text x="-2.54" y="3.81" size="1.27" layer="25">&gt;NAME</text>
+<wire x1="-3.81" y1="1.27" x2="3.81" y2="1.27" width="0.127" layer="21"/>
+<wire x1="3.81" y1="1.27" x2="3.81" y2="-1.27" width="0.127" layer="21"/>
+<wire x1="3.81" y1="-1.27" x2="-3.81" y2="-1.27" width="0.127" layer="21"/>
+<wire x1="-3.81" y1="-1.27" x2="-3.81" y2="1.27" width="0.127" layer="21"/>
+</package>
+<package name="CONN-10AWG-2">
+<pad name="P$1" x="4" y="0" drill="2.75" diameter="5"/>
+<pad name="P$2" x="-4" y="0" drill="2.75" diameter="5"/>
+<wire x1="-7" y1="3" x2="7" y2="3" width="0.25" layer="21"/>
+<wire x1="7" y1="3" x2="7" y2="-3" width="0.25" layer="21"/>
+<wire x1="7" y1="-3" x2="-7" y2="-3" width="0.25" layer="21"/>
+<wire x1="-7" y1="-3" x2="-7" y2="3" width="0.25" layer="21"/>
+<text x="0.5" y="-2" size="1" layer="25" ratio="10" rot="R90">&gt;NAME</text>
+</package>
 </packages>
 <symbols>
 <symbol name="STM32F4">
@@ -1286,6 +1322,16 @@ LOGO</text>
 <text x="-5.08" y="-5.08" size="2.54" layer="94" ratio="10">-</text>
 <text x="5.08" y="7.62" size="2.54" layer="95" ratio="10">&gt;NAME</text>
 <text x="5.08" y="-7.62" size="2.54" layer="96" ratio="10">&gt;VALUE</text>
+</symbol>
+<symbol name="HEADER-1X2">
+<pin name="P$1" x="-5.08" y="2.54" length="middle"/>
+<pin name="P$2" x="-5.08" y="0" length="middle"/>
+<wire x1="0" y1="2.54" x2="0" y2="5.08" width="0.254" layer="94"/>
+<wire x1="0" y1="5.08" x2="7.62" y2="5.08" width="0.254" layer="94"/>
+<wire x1="7.62" y1="5.08" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-2.54" x2="0" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="0" y1="-2.54" x2="0" y2="2.54" width="0.254" layer="94"/>
+<text x="-2.54" y="-5.08" size="2.54" layer="95">&gt;NAME</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -1918,6 +1964,49 @@ LOGO</text>
 <connect gate="G$1" pin="INP" pad="3"/>
 <connect gate="G$1" pin="OUT" pad="1"/>
 <connect gate="G$1" pin="V" pad="5"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="HEADER-1X2" prefix="CN">
+<gates>
+<gate name="G$1" symbol="HEADER-1X2" x="-2.54" y="0"/>
+</gates>
+<devices>
+<device name="M127" package="M127-1X2-THM">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="M254" package="HEADER-1X2-THM-TIGHT">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name=".4" package="HEADER-1X2-THM-WIDE">
+<connects>
+<connect gate="G$1" pin="P$1" pad="1"/>
+<connect gate="G$1" pin="P$2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="" package="CONN-10AWG-2">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -3825,7 +3914,7 @@ Source: http://www.osram.convergy.de/</description>
 <part name="J1" library="jaw" deviceset="HEADER-2X4" device=""/>
 <part name="J2" library="jaw" deviceset="HEADER-2X4" device=""/>
 <part name="J3" library="jaw" deviceset="HEADER-2X4" device=""/>
-<part name="R9" library="jaw" deviceset="R" device="0603" value="1k"/>
+<part name="R9" library="jaw" deviceset="R" device="0603" value="470"/>
 <part name="R11" library="jaw" deviceset="R" device="0603" value="1k"/>
 <part name="R12" library="jaw" deviceset="R" device="0603" value="1k"/>
 <part name="R13" library="jaw" deviceset="R" device="0603" value="10k"/>
@@ -3887,6 +3976,8 @@ Source: http://www.osram.convergy.de/</description>
 <part name="VCCA3" library="jaw" deviceset="PWR-VCCA" device=""/>
 <part name="VCCA5" library="jaw" deviceset="PWR-VCCA" device=""/>
 <part name="VCCA6" library="jaw" deviceset="PWR-VCCA" device=""/>
+<part name="CN1" library="jaw" deviceset="HEADER-1X2" device=".4" value="HEADER-1X2.4"/>
+<part name="GND29" library="jaw" deviceset="PWR-GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -3899,6 +3990,7 @@ Source: http://www.osram.convergy.de/</description>
 <text x="88.9" y="198.12" size="2.54" layer="97">Tb</text>
 <text x="106.68" y="198.12" size="2.54" layer="97">Tt</text>
 <text x="124.46" y="198.12" size="2.54" layer="97">IO</text>
+<text x="165.1" y="170.18" size="2.54" layer="97">Sync Out</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
@@ -4060,6 +4152,8 @@ Source: http://www.osram.convergy.de/</description>
 <instance part="VCCA3" gate="G$1" x="25.4" y="231.14"/>
 <instance part="VCCA5" gate="G$1" x="388.62" y="160.02"/>
 <instance part="VCCA6" gate="G$1" x="81.28" y="264.16"/>
+<instance part="CN1" gate="G$1" x="175.26" y="180.34" rot="R180"/>
+<instance part="GND29" gate="G$1" x="180.34" y="175.26"/>
 </instances>
 <busses>
 </busses>
@@ -4375,6 +4469,10 @@ Source: http://www.osram.convergy.de/</description>
 <segment>
 <pinref part="C33" gate="G$1" pin="P$2"/>
 <pinref part="GND28" gate="G$1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="CN1" gate="G$1" pin="P$1"/>
+<pinref part="GND29" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="VCC" class="0">
@@ -5082,9 +5180,9 @@ Source: http://www.osram.convergy.de/</description>
 <label x="114.3" y="139.7" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U1" gate="G$1" pin="PA6"/>
-<wire x1="223.52" y1="180.34" x2="220.98" y2="180.34" width="0.1524" layer="91"/>
-<label x="210.82" y="180.34" size="1.778" layer="95"/>
+<pinref part="U1" gate="G$1" pin="PC9"/>
+<wire x1="259.08" y1="147.32" x2="264.16" y2="147.32" width="0.1524" layer="91"/>
+<label x="264.16" y="147.32" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IOLED2" class="0">
@@ -5497,6 +5595,13 @@ Source: http://www.osram.convergy.de/</description>
 <pinref part="U5" gate="G$1" pin="INP"/>
 <wire x1="40.64" y1="45.72" x2="40.64" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="40.64" y1="27.94" x2="99.06" y2="27.94" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$12" class="0">
+<segment>
+<pinref part="U1" gate="G$1" pin="PA6"/>
+<pinref part="CN1" gate="G$1" pin="P$2"/>
+<wire x1="223.52" y1="180.34" x2="180.34" y2="180.34" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

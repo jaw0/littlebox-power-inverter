@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
@@ -568,10 +568,10 @@ LOGO</text>
 <part name="L4" library="jaw" deviceset="L" device="XAL10" value="10u"/>
 <part name="C1" library="jaw" deviceset="C" device="1210" value=".1"/>
 <part name="C2" library="jaw" deviceset="C" device="1210" value=".1u"/>
-<part name="C3" library="jaw" deviceset="C" device="1210" value=".030u"/>
-<part name="C4" library="jaw" deviceset="C" device="1210" value=".010u"/>
+<part name="C3" library="jaw" deviceset="C" device="1210" value=".027u"/>
+<part name="C4" library="jaw" deviceset="C" device="1210" value=".018u"/>
 <part name="C5" library="jaw" deviceset="C" device="1210" value="DNP"/>
-<part name="C6" library="jaw" deviceset="C" device="1210" value=".018u"/>
+<part name="C6" library="jaw" deviceset="C" device="1210" value=".010u"/>
 <part name="U$1" library="jaw" deviceset="ROBOTMAN-LOGO" device=""/>
 <part name="U$2" library="jaw" deviceset="SYMBOL-WARNING" device=""/>
 <part name="C7" library="jaw" deviceset="C" device="1210" value=".1u"/>

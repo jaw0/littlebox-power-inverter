@@ -1710,7 +1710,7 @@ Please make sure your boards conform to these design rules.</description>
 <via x="26.9" y="2.1" extent="1-16" drill="0.35"/>
 <via x="22.4" y="2.1" extent="1-16" drill="0.35"/>
 <via x="23.9" y="8.6" extent="1-16" drill="0.35"/>
-<via x="15.6" y="5.4" extent="1-16" drill="0.35"/>
+<via x="15.6" y="7.4" extent="1-16" drill="0.35"/>
 <via x="46.4" y="6.6" extent="1-16" drill="0.35"/>
 <via x="50.7" y="16.7" extent="1-16" drill="0.35"/>
 <via x="54.9" y="20.3" extent="1-16" drill="0.35"/>
@@ -1843,8 +1843,17 @@ Please make sure your boards conform to these design rules.</description>
 <wire x1="77.1" y1="70.4" x2="75.8" y2="70.4" width="0.5" layer="1"/>
 <wire x1="65" y1="19.7" x2="65" y2="18" width="0.5" layer="1"/>
 <wire x1="65" y1="18" x2="64.3" y2="17.3" width="0.5" layer="1"/>
-<via x="81.6" y="24.1" extent="1-16" drill="0.35"/>
+<via x="82.5" y="23.5" extent="1-16" drill="0.35"/>
 <via x="78" y="16.7" extent="1-16" drill="0.35"/>
+<via x="16.7" y="2.4" extent="1-16" drill="0.35"/>
+<via x="39.3" y="1" extent="1-16" drill="0.35"/>
+<via x="61" y="4.5" extent="1-16" drill="0.35"/>
+<via x="46.7" y="1" extent="1-16" drill="0.35"/>
+<via x="78.5" y="1.5" extent="1-16" drill="0.35"/>
+<via x="48.1" y="72.2" extent="1-16" drill="0.35"/>
+<via x="61.8" y="72.2" extent="1-16" drill="0.35"/>
+<via x="78.3" y="72.5" extent="1-16" drill="0.35"/>
+<via x="84.5" y="27.1" extent="1-16" drill="0.35"/>
 </signal>
 <signal name="VCC">
 <contactref element="C20" pad="1"/>
@@ -2053,7 +2062,7 @@ Please make sure your boards conform to these design rules.</description>
 <wire x1="76.05" y1="21.35" x2="76.05" y2="21.8" width="0.35" layer="1"/>
 <wire x1="76.05" y1="21.8" x2="74" y2="21.8" width="0.35" layer="1"/>
 <wire x1="74" y1="17.1" x2="74" y2="21.8" width="0" layer="19" extent="1-15"/>
-<wire x1="75.55" y1="12.1" x2="74.7" y2="7.5" width="0" layer="19" extent="1-1"/>
+<wire x1="75.55" y1="12.1" x2="75" y2="16.1" width="0" layer="19" extent="1-15"/>
 </signal>
 <signal name="N$29">
 <contactref element="U1" pad="31"/>
@@ -3026,9 +3035,6 @@ Please make sure your boards conform to these design rules.</description>
 </signal>
 <signal name="N$21">
 <via x="57.5" y="22.7" extent="1-16" drill="2.5"/>
-</signal>
-<signal name="N$22">
-<wire x1="77.5" y1="14.3" x2="77.5" y2="12.3" width="0" layer="19" extent="1-16"/>
 </signal>
 </signals>
 </board>

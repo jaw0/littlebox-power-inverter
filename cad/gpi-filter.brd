@@ -13,7 +13,7 @@
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
 <layer number="15" name="Route15" color="4" fill="6" visible="no" active="no"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
@@ -122,10 +122,14 @@
 </layers>
 <board>
 <plain>
-<wire x1="2" y1="0" x2="2" y2="30" width="0.01" layer="20"/>
-<wire x1="2" y1="30" x2="58" y2="30" width="0.01" layer="20"/>
-<wire x1="58" y1="30" x2="58" y2="0" width="0.01" layer="20"/>
-<wire x1="58" y1="0" x2="2" y2="0" width="0.01" layer="20"/>
+<wire x1="5" y1="30" x2="55" y2="30" width="0.01" layer="20"/>
+<wire x1="55" y1="30" x2="58" y2="27" width="0.01" layer="20" curve="-90"/>
+<wire x1="58" y1="27" x2="58" y2="3" width="0.01" layer="20"/>
+<wire x1="58" y1="3" x2="55" y2="0" width="0.01" layer="20" curve="-90"/>
+<wire x1="55" y1="0" x2="5" y2="0" width="0.01" layer="20"/>
+<wire x1="5" y1="0" x2="2" y2="3" width="0.01" layer="20" curve="-90"/>
+<wire x1="2" y1="3" x2="2" y2="27" width="0.01" layer="20"/>
+<wire x1="2" y1="27" x2="5" y2="30" width="0.01" layer="20" curve="-90"/>
 <text x="5" y="5" size="1.5" layer="21" ratio="15" rot="R90">JAW 2014-09</text>
 <text x="7.25" y="5" size="1.43" layer="21" ratio="15" rot="R90">www.791rl.com</text>
 <text x="9.5" y="5" size="1.24" layer="21" ratio="15" rot="R90">GPI1FLT Rev. 0</text>
@@ -516,7 +520,8 @@ Please make sure your boards conform to these design rules.</description>
 <wire x1="7.1" y1="25.1" x2="8.01005" y2="25.489946875" width="1.5" layer="1"/>
 <polygon width="0.25" layer="16" thermals="no">
 <vertex x="5" y="29"/>
-<vertex x="57" y="29"/>
+<vertex x="55.75" y="29"/>
+<vertex x="57" y="27.75"/>
 <vertex x="57" y="25"/>
 <vertex x="55" y="23"/>
 <vertex x="7" y="23"/>

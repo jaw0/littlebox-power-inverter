@@ -13,21 +13,21 @@
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
 <layer number="15" name="Signal" color="5" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="yes"/>
 <layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
 <layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
@@ -200,9 +200,10 @@
 <vertex x="19.5" y="51.7"/>
 <vertex x="19.5" y="58.2"/>
 </polygon>
-<text x="130.6" y="69.2" size="1.25" layer="22" ratio="10" rot="SMR270">Genius hath electric power
+<text x="131" y="69.5" size="1.25" layer="22" ratio="10" rot="SMR270">Genius hath electric power
 Which earth can never tame,
-Bright suns may scorch and dark clouds lower,
+Bright suns may scorch and 
+dark clouds lower,
 Its flash is still the same.
      -- Lydia Maria Child
 </text>
@@ -625,7 +626,7 @@ DOWN</text>
 <class number="0" name="default" width="0" drill="0">
 </class>
 </classes>
-<designrules name="LaenPCBOrder *">
+<designrules name="OSHPark-4layer (1)">
 <description language="de">&lt;b&gt;EAGLE Design Rules&lt;/b&gt;
 &lt;p&gt;
 Die Standard-Design-Rules sind so gewählt, dass sie für 
@@ -637,25 +638,25 @@ einem neuen Namen ab.</description>
 &lt;p&gt;
 Please make sure your boards conform to these design rules.</description>
 <param name="layerSetup" value="(1*2*15*16)"/>
-<param name="mtCopper" value="0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm"/>
-<param name="mtIsolate" value="1.5011mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm"/>
-<param name="mdWireWire" value="6mil"/>
-<param name="mdWirePad" value="6mil"/>
-<param name="mdWireVia" value="6mil"/>
-<param name="mdPadPad" value="6mil"/>
-<param name="mdPadVia" value="6mil"/>
-<param name="mdViaVia" value="6mil"/>
-<param name="mdSmdPad" value="6mil"/>
-<param name="mdSmdVia" value="6mil"/>
-<param name="mdSmdSmd" value="6mil"/>
+<param name="mtCopper" value="0.035559375mm 0.01778125mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.0356mm 0.01778125mm 0.035559375mm"/>
+<param name="mtIsolate" value="0.17018125mm 47mil 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.2007mm 0.1499mm 0.17018125mm"/>
+<param name="mdWireWire" value="5mil"/>
+<param name="mdWirePad" value="5mil"/>
+<param name="mdWireVia" value="5mil"/>
+<param name="mdPadPad" value="5mil"/>
+<param name="mdPadVia" value="5mil"/>
+<param name="mdViaVia" value="5mil"/>
+<param name="mdSmdPad" value="5mil"/>
+<param name="mdSmdVia" value="5mil"/>
+<param name="mdSmdSmd" value="5mil"/>
 <param name="mdViaViaSameLayer" value="8mil"/>
 <param name="mnLayersViaInSmd" value="2"/>
 <param name="mdCopperDimension" value="15mil"/>
 <param name="mdDrill" value="6mil"/>
 <param name="mdSmdStop" value="0mil"/>
-<param name="msWidth" value="6mil"/>
-<param name="msDrill" value="13mil"/>
-<param name="msMicroVia" value="13mil"/>
+<param name="msWidth" value="5mil"/>
+<param name="msDrill" value="10mil"/>
+<param name="msMicroVia" value="10mil"/>
 <param name="msBlindViaRatio" value="0.5"/>
 <param name="rvPadTop" value="0.25"/>
 <param name="rvPadInner" value="0.25"/>
@@ -664,15 +665,15 @@ Please make sure your boards conform to these design rules.</description>
 <param name="rvViaInner" value="0.25"/>
 <param name="rvMicroViaOuter" value="0.25"/>
 <param name="rvMicroViaInner" value="0.25"/>
-<param name="rlMinPadTop" value="7mil"/>
+<param name="rlMinPadTop" value="4mil"/>
 <param name="rlMaxPadTop" value="20mil"/>
-<param name="rlMinPadInner" value="7mil"/>
+<param name="rlMinPadInner" value="4mil"/>
 <param name="rlMaxPadInner" value="20mil"/>
-<param name="rlMinPadBottom" value="7mil"/>
+<param name="rlMinPadBottom" value="4mil"/>
 <param name="rlMaxPadBottom" value="20mil"/>
-<param name="rlMinViaOuter" value="7mil"/>
+<param name="rlMinViaOuter" value="4mil"/>
 <param name="rlMaxViaOuter" value="20mil"/>
-<param name="rlMinViaInner" value="7mil"/>
+<param name="rlMinViaInner" value="4mil"/>
 <param name="rlMaxViaInner" value="20mil"/>
 <param name="rlMinMicroViaOuter" value="4mil"/>
 <param name="rlMaxMicroViaOuter" value="20mil"/>
@@ -689,7 +690,7 @@ Please make sure your boards conform to these design rules.</description>
 <param name="mlMaxStopFrame" value="4mil"/>
 <param name="mlMinCreamFrame" value="0mil"/>
 <param name="mlMaxCreamFrame" value="0mil"/>
-<param name="mlViaStopLimit" value="0.35mm"/>
+<param name="mlViaStopLimit" value="0mil"/>
 <param name="srRoundness" value="0"/>
 <param name="srMinRoundness" value="0mil"/>
 <param name="srMaxRoundness" value="0mil"/>
@@ -822,7 +823,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="25.4" y="71.7" size="1.27" layer="28" rot="MR180"/>
 </element>
 <element name="Q1" library="jaw" package="TO-247-3-DOWN" value="MOSFETTO247REV" x="44.3" y="40" smashed="yes" rot="MR0">
-<attribute name="NAME" x="23.98" y="46.35" size="2.54" layer="26" rot="MR270"/>
+<attribute name="NAME" x="30.88" y="47.55" size="2.54" layer="26" rot="MR270"/>
 </element>
 <element name="Q3" library="jaw" package="TO-247-3-DOWN" value="MOSFETTO247REV" x="44.3" y="59" smashed="yes" rot="MR0">
 <attribute name="NAME" x="23.98" y="65.35" size="2.54" layer="26" rot="MR270"/>
@@ -1082,7 +1083,7 @@ Please make sure your boards conform to these design rules.</description>
 <element name="U$4" library="jaw" package="SYMBOL-WARNING" value="SYMBOL-WARNING" x="74.7" y="70.8" rot="MR0"/>
 <element name="U$5" library="jaw" package="SYMBOL-WARNING" value="SYMBOL-WARNING" x="14.1" y="31.5" rot="MR90"/>
 <element name="U$6" library="jaw" package="SYMBOL-WARNING" value="SYMBOL-WARNING" x="8.4" y="14.2" rot="MR0"/>
-<element name="U$7" library="jaw" package="SYMBOL-WARNING" value="SYMBOL-WARNING" x="118.3" y="14" rot="MR0"/>
+<element name="U$7" library="jaw" package="SYMBOL-WARNING" value="SYMBOL-WARNING" x="117.1" y="13.5" rot="MR0"/>
 <element name="C26" library="jaw" package="SMD2220" value=".1u" x="48.1" y="71.6" smashed="yes" rot="MR180">
 <attribute name="NAME" x="39.9" y="69.9" size="1.27" layer="26" ratio="10" rot="MR180"/>
 <attribute name="VALUE" x="47.1" y="72.1" size="1.27" layer="28" ratio="10" rot="MR180"/>
@@ -2721,6 +2722,22 @@ Please make sure your boards conform to these design rules.</description>
 <approved hash="19,1,8ab034e2ec1490c9"/>
 <approved hash="19,1,ebfab2b93eb667f5"/>
 <approved hash="19,1,9e7b36f1de5d6517"/>
+<approved hash="19,1,bc3c00000381bfbd"/>
+<approved hash="19,1,21a35b7a9f04da28"/>
+<approved hash="19,1,cbbeacb3eba7df4f"/>
+<approved hash="19,1,a61910fe0a711eb3"/>
+<approved hash="19,1,bc1400280389bfb5"/>
+<approved hash="19,1,50026d3340a0c267"/>
+<approved hash="19,1,bc3c3c003f83bfbf"/>
+<approved hash="19,1,531fac7a8500df93"/>
+<approved hash="19,1,c9bcaab3fba7e34f"/>
+<approved hash="19,1,a6a253fdf671090e"/>
+<approved hash="19,1,bc143c283f8bbfb7"/>
+<approved hash="19,1,10be86315ca4cbdc"/>
+<approved hash="19,1,808913a5fe68866b"/>
+<approved hash="19,1,77787199e8e46c6a"/>
+<approved hash="19,1,8473d84fd86f8453"/>
+<approved hash="19,1,64c8eba451db3598"/>
 </errors>
 </board>
 </drawing>

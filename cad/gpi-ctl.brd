@@ -12,8 +12,8 @@
 <layer number="2" name="power" color="5" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
-<layer number="15" name="signal" color="1" fill="1" visible="yes" active="yes"/>
-<layer number="16" name="gnd" color="6" fill="1" visible="no" active="yes"/>
+<layer number="15" name="signal" color="1" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="6" fill="1" visible="no" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
@@ -1444,7 +1444,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="78.378" y="16.386" size="1" layer="27" font="vector" ratio="10" rot="R180"/>
 </element>
 <element name="C39" library="jaw" package="SMD0603" value=".1u" x="75.5" y="7.5" smashed="yes">
-<attribute name="NAME" x="74.222" y="4.716" size="1" layer="25" font="vector" ratio="10"/>
+<attribute name="NAME" x="74.122" y="5.416" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="73.722" y="5.414" size="1" layer="27" font="vector" ratio="10"/>
 </element>
 <element name="R20" library="jaw" package="SMD0603" value="100" x="71.5" y="16.2" smashed="yes" rot="R180">
@@ -1843,7 +1843,7 @@ Please make sure your boards conform to these design rules.</description>
 <wire x1="77.1" y1="70.4" x2="75.8" y2="70.4" width="0.5" layer="1"/>
 <wire x1="65" y1="19.7" x2="65" y2="18" width="0.5" layer="1"/>
 <wire x1="65" y1="18" x2="64.3" y2="17.3" width="0.5" layer="1"/>
-<via x="82.5" y="23.5" extent="1-16" drill="0.35"/>
+<via x="81.8" y="24.1" extent="1-16" drill="0.35"/>
 <via x="78" y="16.7" extent="1-16" drill="0.35"/>
 <via x="16.7" y="2.4" extent="1-16" drill="0.35"/>
 <via x="39.3" y="1" extent="1-16" drill="0.35"/>
@@ -1853,7 +1853,7 @@ Please make sure your boards conform to these design rules.</description>
 <via x="48.1" y="72.2" extent="1-16" drill="0.35"/>
 <via x="61.8" y="72.2" extent="1-16" drill="0.35"/>
 <via x="78.3" y="72.5" extent="1-16" drill="0.35"/>
-<via x="84.5" y="27.1" extent="1-16" drill="0.35"/>
+<via x="84.2" y="30.5" extent="1-16" drill="0.35"/>
 </signal>
 <signal name="VCC">
 <contactref element="C20" pad="1"/>

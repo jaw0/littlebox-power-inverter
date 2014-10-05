@@ -12,15 +12,26 @@
 #include <pwm.h>
 #include <stm32.h>
 #include <userint.h>
+#include <error.h>
 
+#include "defproto.h"
 #include "util.h"
+#include "gpiconf.h"
 #include "hw.h"
 #include "inverter.h"
 
 #define APB2CLOCK	84000000
-#define HBRFREQ		656250
-#define BOOSTFREQ	328125
+#define HBRFREQ_LO	300000
+#define HBRFREQ_HI	350000
+#define BOOSTFREQ_LO	300000
+#define BOOSTFREQ_HI	350000
 #define DEADTIME	30	// ns.  ~ Toff + Tfall - Ton
+
+#define HBRFREQ_VMIN	(APB2CLOCK / HBRFREQ_HI)
+#define HBRFREQ_VMAX	(APB2CLOCK / HBRFREQ_LO)
+#define BOOSTFREQ_VMIN	(APB2CLOCK / BOOSTFREQ_HI)
+#define BOOSTFREQ_VMAX	(APB2CLOCK / BOOSTFREQ_LO)
+
 
 static int maxval_h, maxval_b;
 static int pwm_h, mode_b, pwm_b;
@@ -32,7 +43,9 @@ pwmval(int v, int max){
     // dither
     int d = v & 0xFFFF;
     v >>= 16;
-    if( (v < max-1)  && (random() & 0xFFFF) <= d ) v ++;
+    if( (v < max-1) && (random() & 0xFFFF) <= d ) v ++;
+    if( v > max-1 ) v = max-1;
+    if( v <-max+1 ) v = -max+1;
     return v;
 }
 
@@ -42,15 +55,20 @@ pwmval(int v, int max){
 void
 set_boost_pwm(int v, int m){
 
-    return; // XXX
+    // skip check if we are turning it off (to avoid recursion)
+    if( v && safety_check_boost() ) return;
 
     if( m != mode_b ){
-        if( m == BOOST_UNSYNCH )
+        if( m == BOOST_UNSYNCH ){
             // high-side gate off
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_50MHZ );
-        else
+            gpio_clear( HW_GPIO_GATE_BOOST_H );
+            // TIM8->PSC = 3;	// quarter freq, to lower switching loss
+        }else{
             // enable high-side gate
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
+            // TIM8->PSC = 0;	// normal freq
+        }
     }
 
     pwm_set( HW_TIMER_GATE_BOOST, pwmval(v, maxval_b) );
@@ -58,23 +76,36 @@ set_boost_pwm(int v, int m){
     mode_b = m;
 }
 
+
 // set( 0 .. 64k )
 // 0,0 => both sides ground
 // 64k,64k => both sides high
 // normal operation: x,0 and 0,x
-void
+int
 set_hbridge_pwm(int v){
 
-    if( v >= 0 ){
-        //printf("H L %d->%d\n", v, pwmval(v, maxval_h));
-        pwm_set( HW_TIMER_GATE_HBRIDGE_L, pwmval(v, maxval_h) );
-        pwm_set( HW_TIMER_GATE_HBRIDGE_R, 0);
-    }else{
-        //printf("H R %d->%d\n", v, pwmval(-v, maxval_h));
-        pwm_set( HW_TIMER_GATE_HBRIDGE_L, 0 );
-        pwm_set( HW_TIMER_GATE_HBRIDGE_R, pwmval(-v, maxval_h) );
-    }
     pwm_h = v;
+
+    if( v >= 0 ){
+        v = pwmval(v, maxval_h);
+        pwm_set( HW_TIMER_GATE_HBRIDGE_L, v );
+        pwm_set( HW_TIMER_GATE_HBRIDGE_R, 0);
+        return v;
+    }else{
+        v = pwmval(-v, maxval_h);
+        pwm_set( HW_TIMER_GATE_HBRIDGE_L, 0 );
+        pwm_set( HW_TIMER_GATE_HBRIDGE_R, v );
+        return -v;
+    }
+}
+
+int
+hbridge_pwm_val(int v){
+
+    if( v >= 0 )
+        return pwmval(v, maxval_h);
+    else
+        return pwmval(-v, maxval_h);
 }
 
 void
@@ -84,6 +115,29 @@ set_gates_safe(void){
     set_hbridge_pwm(0);
 }
 
+// this is called from set_boost_pwm and read_sensors
+int
+safety_check_boost(void){
+    static char ovct = 0;
+
+    if( battle_short ) return 0;
+
+    int v = get_curr_vh();
+    if( (v >= Q_VOLTS(STOP_HARD_VH)) && (++ovct > 10) ){
+        // last-resort emergency fail-safe cut-off
+        // internal voltage is too high, shut down the boost
+        set_gates_safe();
+        // QQQ - set fault mode or halt device?
+        // presumably, the inverter control system has failed, the fault check has failed
+        kprintf("VH %d\n", v>>4);
+        PANIC("OVER VOLTAGE");
+        return 1;
+    }
+
+    ovct = 0;
+    return 0;
+}
+
 
 void
 update_gate_freq(void){
@@ -91,13 +145,13 @@ update_gate_freq(void){
     return; // XXX
 
     // boost
-    v = 239 + random_n(32);
+    v = BOOSTFREQ_VMIN + random_n(BOOSTFREQ_VMAX - BOOSTFREQ_VMIN );
     TIM8->ARR = v;
     maxval_b = v + 1;
     set_boost_pwm( pwm_b, mode_b );
 
     // h-bridge
-    v = 119 + random_n(16);
+    v = HBRFREQ_VMIN + random_n(HBRFREQ_VMAX - HBRFREQ_VMIN );
     TIM1->ARR = v;
     maxval_h = v + 1;
     set_hbridge_pwm( pwm_h );
@@ -146,15 +200,15 @@ init_gates(void){
     _init_timer( TIM1 );
     _init_timer( TIM8 );
 
-    pwm_init(  HW_TIMER_GATE_BOOST,     BOOSTFREQ, 255 );
-    pwm_init(  HW_TIMER_GATE_HBRIDGE_L, HBRFREQ,   127 );
+    pwm_init(  HW_TIMER_GATE_BOOST,     BOOSTFREQ_HI, BOOSTFREQ_VMIN - 1 );
+    pwm_init(  HW_TIMER_GATE_HBRIDGE_L, HBRFREQ_HI,   HBRFREQ_VMIN - 1 );
 
     // CCER must be set after pwm_init
     TIM1->CCER = 0x0FF;		// channels 1 + 2, inverted
     TIM8->CCER = 0x500; 	// channel 3
 
-    maxval_h = 128;
-    maxval_b = 256;
+    maxval_h = HBRFREQ_VMIN;
+    maxval_b = BOOSTFREQ_VMIN;
 
     set_gates_safe();
 }
@@ -210,4 +264,5 @@ DEFUN(testboost, "test boost")
     set_boost_pwm(0, BOOST_UNSYNCH);
     set_hbridge_pwm(0);
 
+    return 0;
 }

@@ -24,10 +24,20 @@ static volatile int logpos = 0;
 static int logstep = 0;
 static int savepos = 0;
 static int logend  = 0;
-static int8_t logmode = 0;
+enum {
+    LOGMO_OFF,
+    LOGMO_STDRES,
+    LOGMO_LORES,
+    LOGMO_HIRES,
+    LOGMO_PROFILE
+};
+static int8_t logmode = LOGMO_STDRES;
+
+static int diskerrs = 0;
 static volatile proc_t logproc_pid   = 0;
 static volatile int8_t logproc_close = 0;
 static volatile int8_t logproc_pause = 0;
+static volatile int8_t logproc_flush = 0;
 
 #define LOGSIZE		65536
 #define BUFSIZE		8192
@@ -79,6 +89,7 @@ struct control_dat {
 
 struct sensor_dat {
     short vi, ii, vo, io, vh;
+    short ph, pb;
 };
 
 struct cycle_dat {
@@ -156,10 +167,10 @@ _log_version(void){
 
 static void
 _log_sensor(void){
-    if( !ROOMFOR(11) ) return;
+    if( !ROOMFOR(15) ) return;
     _lock();
     u_char *lc = logmem + logpos;
-    lc[0] = MKTAG(LRT_SENSOR, LRL_10B);
+    lc[0] = MKTAG(LRT_SENSOR, LRL_14B);
 
     struct sensor_dat *d = (struct sensor_dat*)(lc + 1);
     d->vi = curr_vi;
@@ -167,8 +178,10 @@ _log_sensor(void){
     d->vo = curr_vo;
     d->io = curr_io;
     d->vh = curr_vh;
+    d->ph = pwm_hbridge >> 6;
+    d->pb = pwm_boost   >> 6;
 
-    logpos += 11;
+    logpos += 15;
     _unlock();
 }
 
@@ -176,7 +189,7 @@ static inline void
 _show_sensor(FILE *f){
     struct sensor_dat *p = (struct sensor_dat*)bbuf;
 
-    fprintf(f, "sensor\tvi=%d i=%d vo=%d io=%d vh=%d",
+    fprintf(f, "sensor\tvi=%d ii=%d vo=%d io=%d vh=%d",
             p->vi, p->ii, p->vo, p->io, p->vh
     );
 }
@@ -239,7 +252,7 @@ _show_cycle(FILE *f){
 
 static void
 _log_control(void){
-    if( !ROOMFOR(11) ) return;
+    if( !ROOMFOR(13) ) return;
     _lock();
     u_char *lc = logmem + logpos;
     lc[0] = MKTAG(LRT_CTL, LRL_12B);
@@ -248,9 +261,9 @@ _log_control(void){
     d->step  = cycle_step;
     d->vtarg = output_vtarg;
     d->ierr  = input_err;
-    d->iadj  = input_adj;
+    d->iadj  = (int)input_adj  >> 1;
     d->oerr  = output_err;
-    d->oadj  = output_adj;
+    d->oadj  = (int)output_adj >> 1;
 
     logpos += 13;
     _unlock();
@@ -260,7 +273,7 @@ static inline void
 _show_control(FILE *f){
     struct control_dat *p = (struct control_dat*)bbuf;
 
-    fprintf(f, "control cs=%d e=%d a=%d, vt=%d e=%e a=%d",
+    fprintf(f, "control cs=%d e=%d a=%d, vt=%d e=%d a=%d",
             p->step,  p->ierr, p->iadj,
             p->vtarg, p->oerr, p->oadj
     );
@@ -501,12 +514,11 @@ syslog(const char *fmt, ...){
 
 void
 diaglog(int tag){
+    short hcs  = half_cycle_step;
 
-    // 3 => off
-    if( logmode == 3 ) return;
+    if( logmode == LOGMO_OFF ) return;
 
-    // 1 => hi res
-    if( logmode == 1 ){
+    if( logmode == LOGMO_HIRES ){
         // high-res mode
         _log_tag(tag);
         _log_control();
@@ -520,8 +532,7 @@ diaglog(int tag){
         return;
     }
 
-    // 2 => lo res
-    if( logmode == 2 ){
+    if( logmode == LOGMO_LORES ){
         if( !(logstep++ % 21000) ){
             _log_stamp();
             _log_cycle();
@@ -531,16 +542,31 @@ diaglog(int tag){
         return;
     }
 
+    if( logmode == LOGMO_PROFILE ){
+        _log_tag(tag);
+        _log_sensor();
+        _log_control();
+        if( !(logstep % 35) )  _log_env();
+        if( !hcs )             _log_cycle();
+        _log_slow();
+        logstep ++;
+        return;
+    }
+
     _log_tag(tag);
 
-    if( inv_state == INV_STATE_RUNNING || inv_state == INV_STATE_ONDELAY2 || inv_state == INV_STATE_SHUTTINGDOWN ){
-        short hcs  = half_cycle_step;
-
+    switch (inv_state){
+    case INV_STATE_ONDELAY2:
+    case INV_STATE_RUNNING:
+    case INV_STATE_SHUTTINGDOWN:
+    case INV_STATE_FAULTED:
+    case INV_STATE_FAULTINGDOWN:
         if( !hcs ) _log_cycle();
         _log_sensor();
         if( !(cycle_step % 10) )  _log_control();
         if( !(logstep % 21000) )  _log_env();
-    }else{
+        break;
+    default:
         if( !(logstep % 21000) ){
             _log_stamp();
             _log_sensor();
@@ -687,25 +713,35 @@ DEFUN(diaglog, "dump diaglog")
 //****************************************************************
 
 void
+diaglog_stdres(void){
+    logmode = LOGMO_STDRES;
+}
+
+void
 diaglog_hires(void){
-    logmode = 1;
+    logmode = LOGMO_HIRES;
 }
 
 void
 diaglog_quiet(void){
-    logmode = 3;
+    logmode = LOGMO_OFF;
 }
 
 void
 diaglog_lores(void){
-    logmode = 2;
+    logmode = LOGMO_LORES;
+}
+
+void
+diaglog_testres(void){
+    logmode = LOGMO_PROFILE;
 }
 
 void
 diaglog_reset(void){
     logpos  = 0;
     logstep = 0;
-    logmode = 0;
+    logmode = LOGMO_STDRES;
     savepos = 0;
     logend  = 0;
     bzero(logmem, LOGSIZE);
@@ -723,7 +759,8 @@ diaglog_save(FILE *f){
         memcpy(bbuf, logmem+i, sz);
 
         // write
-        fwrite(f, bbuf, sz);
+        int w = fwrite(f, bbuf, sz);
+        if( w != sz ) diskerrs ++;
 
         i += sz;
     }
@@ -770,15 +807,19 @@ _save_buf(int pos){
     }
 
     //printf("save log %d=%d+%d; pos %d save %d end %d\n", wl, l1, l2, logpos, savepos, logend);
-    fwrite(logfd, bbuf, wl);
+    int w = fwrite(logfd, bbuf, wl);
+    if( w != wl ) diskerrs ++;
     fflush(logfd);
+    logproc_flush = 0;
 }
 
 static void
 _save_all(void){
+    int c = LOGSIZE / BUFSIZE;
 
     while( logpos != savepos ){
         _save_buf(logpos);
+        if( !--c ) break;
     }
 }
 
@@ -804,10 +845,20 @@ _log_proc(void){
 
 
         // is there data to save
+        int limit = logproc_flush ? 1 : BUFSIZE;
         if( logend ){
-            if( logend - savepos + slp > BUFSIZE ) _save_buf(slp);
+            if( logend - savepos + slp > limit ) _save_buf(slp);
         }else{
-            if( slp - savepos > BUFSIZE ) _save_buf(slp);
+            if( slp - savepos > limit ) _save_buf(slp);
+        }
+
+        if( diskerrs > 100 ){
+            switch(logmode){
+            case LOGMO_HIRES:	logmode = LOGMO_STDRES;	break;
+            case LOGMO_STDRES:	logmode = LOGMO_LORES;	break;
+            case LOGMO_LORES:	logmode = LOGMO_OFF;	break;
+            }
+            diskerrs = 0;
         }
     }
 
@@ -826,7 +877,8 @@ diaglog_open(const char *file){
 
     diaglog_reset();
     logproc_close = 0;
-    logproc_pid   = start_proc( 1024, _log_proc, "logger");
+    logproc_flush = 0;
+    logproc_pid   = start_proc( 4096, _log_proc, "logger");
     yield();
 
     return 1;
@@ -839,10 +891,16 @@ diaglog_close(void){
     proc_t pid = logproc_pid;
     int wp = pid->mommy->flags & PRF_AUTOREAP;
     logproc_close = 1;
+    logproc_flush = 0;
 
     if( !wp ) wait(pid);
 
     return 1;
+}
+
+void
+diaglog_flush(void){
+    logproc_flush = 1;
 }
 
 void
@@ -855,6 +913,18 @@ diaglog_resume(void){
     logproc_pause = 0;
 }
 
+
+
+DEFUN(logging, "enable/disable diaglog")
+{
+    if( argc > 1 ){
+        diaglog_open( argv[1] );
+    }else{
+        diaglog_close();
+    }
+
+    return 0;
+}
 
 DEFUN(syslog, "log message")
 {

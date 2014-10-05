@@ -19,8 +19,11 @@ enum InvState {
     INV_STATE_ONDELAY2,		// waiting for zero-xing to start
     INV_STATE_RUNNING,
     INV_STATE_SHUTTINGDOWN,	// switch was turned off, ramping down
-    INV_STATE_FAULT,
-    INV_STATE_TEST,
+    INV_STATE_FAULTED,		// fault detected
+    INV_STATE_FAULTINGDOWN,	// ramping down
+    INV_STATE_FAULTEDOFF,	// power removed
+    INV_STATE_DIAG,		// diagnostic menu
+    INV_STATE_TEST		// control taken over by test code
 };
 
 enum BoostMode {
@@ -44,8 +47,9 @@ extern int   output_err, prev_output_err, input_err, prev_input_err;
 extern float output_adj, prev_output_adj, input_adj, prev_input_adj;
 
 extern int output_vtarg, input_itarg;
+extern int pwm_hbridge, pwm_boost;
 
 extern void set_boost_pwm(int, int);
-extern void set_hbridge_pwm(int);
+extern int  set_hbridge_pwm(int);
 
 #endif /* __inverter_h__ */

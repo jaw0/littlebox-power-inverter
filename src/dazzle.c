@@ -121,8 +121,9 @@ DEFUN(testleds, "test leds")
     blinky_override = 1;
 
     for(i=0; i<2; i++){
-        set_led_green(127);
+        set_led_green(255);
         play(8, "a");
+        sleep(1);
         set_led_green(0);
 
         for(j=0; j<255; j++){
@@ -157,6 +158,39 @@ DEFUN(testfans, "test fans")
     }
 }
 
+DEFUN(setled, "set led")
+{
+    if( argc < 3 ){
+        printf(STDERR, "setled led level\n");
+        return 1;
+    }
+
+    int l = atoi(argv[1]);
+    int v = atoi(argv[2]);
+
+    if( l == 1 )      set_led_green( v );
+    else if( l == 2 ) set_led_red( v );
+    else              set_led_white( v );
+
+    return 0;
+}
+
+DEFUN(setfan, "set fan speed")
+{
+    if( argc < 3 ){
+        printf(STDERR, "setfan fan speed\n");
+        return 1;
+    }
+
+    int f = atoi(argv[1]);
+    int v = atoi(argv[2]);
+
+    if( f == 1 ) set_fan1( v );
+    else         set_fan2( v );
+
+    return 0;
+
+}
 
 static u_char _blinky_pattern[] = {
     1, 2, 4, 8, 16,
@@ -228,3 +262,12 @@ DEFUN(image, "display image")
 }
 
 
+DEFUN(debser, "debug serial")
+{
+
+    // print wchan
+    // ser SR
+
+    sleep(2);
+    return 0;
+}

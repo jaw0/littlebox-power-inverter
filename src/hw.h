@@ -99,5 +99,12 @@ extern int blinky_override;
 extern char _ccmem[];
 
 
+/****************************************************************/
+
+#define get_switch()	gpio_get( HW_GPIO_SWITCH )
+#define get_button()	gpio_get( HW_GPIO_BUTTON )
+
+
+/****************************************************************/
 
 #endif /* __gpi_hw_h__ */

@@ -13,6 +13,7 @@
 #include <adc.h>
 #include <spi.h>
 #include <i2c.h>
+#include <nstdio.h>
 #include <ioctl.h>
 #include <stm32.h>
 #include <userint.h>
@@ -21,10 +22,10 @@
 #include "hw.h"
 
 
-
 /****************************************************************/
 
 DEFVAR(int, bootseqno, 0, UV_TYPE_UL, "boot sequence number")
+DEFVAR(uv_str16_t, logfile, "", UV_TYPE_STR16 | UV_TYPE_CONFIG, "auto enable logging to file")
 
 DEFUN(updateboot, "update boot data")
 {
@@ -36,6 +37,14 @@ DEFUN(updateboot, "update boot data")
         fprintf(f, "time      = \"%T\"\n", systime);
         fclose(f);
     }
+}
+
+DEFUN(save_all, "save all config data")
+{
+    save_config("fl0:config.rc");
+    save_config("config.rc");
+    ui_f_updateboot(0,0,0);
+    return 0;
 }
 
 unsigned int
@@ -64,11 +73,14 @@ hw_init(void){
 
     bootmsg("hw init:");
 
-    // enable i+d cache, prefecth=off => faster + lower adc noise
+    // enable i+d cache, prefetch=off => faster + lower adc noise
     // nb: prefetch=on => more faster, less power, more noise
     FLASH->ACR  |= 0x600;
 
     // T1,2 => AF(1); T3,4,5 => AF(2), else AF(3)
+
+    gpio_init( HW_GPIO_SWITCH, GPIO_INPUT );
+    gpio_init( HW_GPIO_BUTTON, GPIO_INPUT );
 
     // beeper
     gpio_init( HW_GPIO_AUDIO, GPIO_AF(2) | GPIO_SPEED_2MHZ );
@@ -115,12 +127,14 @@ onpanic(const char *msg){
     freq_set( HW_TIMER_AUDIO, 200 );
     pwm_set(  HW_TIMER_AUDIO, 0x7F );
 
-    currproc = 0;
     splproc();
-    ssd13060_puts("\e[J\e[16mPANIC\r\n\e[15m");
-    ssd13060_puts(msg);
-    ssd13060_puts("\r\n");
-    ssd13060_puts(0);
+    currproc = 0;
+
+    ssd13060_puts("\e[J\e[16m*** PANIC ***\r\n\e[15m");
+    if( msg ){
+        ssd13060_puts(msg);
+        ssd13060_puts("\r\n");
+    }
     splhigh();
 
     while(1){
@@ -136,23 +150,33 @@ onpanic(const char *msg){
 
 /****************************************************************/
 
+// first look on flash, then on card
+#define RUN_SCRIPT(file)	(run_script("fl0:" file) && run_script(file))
+
 void
 main(void){
 
-    if( run_script("bootdata.rc") ){
+    if( RUN_SCRIPT("bootdata.rc") ){
         // could not run rc - play warning tone
         play(32, "[3 d+4>>d-4>> ]");
     }
     ui_f_updateboot(0,0,0);
     mkdir("log");
 
+    RUN_SCRIPT("config.rc");
+
     extern void blinky(void);
     start_proc( 1024, blinky, "blinky" );
+
+    if( logfile ){
+        diaglog_open( logfile );
+        diaglog_lores();
+    }
 
     // finally, start the inverter
     init_inverter();
 
-    run_script("startup.rc");
+    RUN_SCRIPT("startup.rc");
 
     // return to shell
 }

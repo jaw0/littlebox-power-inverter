@@ -22,23 +22,14 @@
 #define CRUMBS	"adc"
 #include "crumbs.h"
 
-#define DMAC		DMA2_Stream0
-
 #define SR_EOC		2
 #define SR_OVR		(1<<5)
 #define CR2_SWSTART	0x40000000
 #define CR2_ADON	1
 
-#define DMASCR_MINC	(1<<10)
-#define DMASCR_DIR_M2P  (1<<6)
-#define DMASCR_PFCTRL	(1<<5)
-#define DMASCR_TEIE	4
-#define DMASCR_TCIE	16
-#define DMASCR_EN	1
-
 
 static lock_t adclock;
-static short dmabuf[27];
+static short dmabuf[30];
 static short adcstate;
 #define ADC_DONE	 0
 #define ADC_BUSY	 1
@@ -61,17 +52,22 @@ static short adcstate;
 // recent sensor values
 struct SensorData {
     u_short val;
+    u_short lpf;
     u_short hist[3];
 };
 
 static struct SensorData sensor_data[9];
+
+int offset_io, offset_ii;
+
 
 /****************************************************************/
 
 #include "adc_wait.c"
 //#include "adc_asyncirq.c"	- too slow
 //#include "adc_syncirq.c"	- overruns
-//#include "adc_dma.c"		- overruns
+//#include "adc_dma.c"	     // - overruns
+//#include "adc_dma2.c"	     // - scrambled data
 
 /****************************************************************/
 
@@ -93,6 +89,11 @@ median_filter(struct SensorData *sd){
         else                         sd->val = hist[0];
     }
 #endif
+}
+
+static inline void
+lowpass_filter(struct SensorData *sd){
+    sd->lpf = (sd->val + 3 * sd->lpf) >> 2;
 }
 
 void
@@ -120,8 +121,34 @@ read_sensors(void){
         }
 #endif
         median_filter(sensor_data + si);
+        lowpass_filter(sensor_data + si);
     }
+
+    // emergency fail-safe
+    safety_check_boost();
 }
+
+static void
+calibrate(void){
+    int i, to=0, ti=0, tc=0;
+
+    // prime
+    for(i=0;i<100;i++) read_sensors();
+
+    // actual io is 0 while idle
+    // actual ii ~ ic while idle
+    // in Rev.1 ic should be precisely known
+
+    for(i=0; i<100; i++){
+        read_sensors();
+        ti += sensor_data[3].val;
+        to += sensor_data[4].val;
+        tc += sensor_data[5].val - 2048;
+    }
+    offset_io = to / 100;
+    offset_ii = (ti - tc) / 100;
+}
+
 
 // returns .1 degrees C
 static inline int
@@ -135,17 +162,29 @@ temperature(int v){
 
 
 // RSN - convert to proper calibrated units V:Q.4, A:Q.8
-int get_curr_vh(void){    return sensor_data[0].val; }
-int get_curr_vo(void){    return sensor_data[1].val; }
+int get_curr_vh(void){    return (sensor_data[0].val * 433894) >> 16; }		// XXX - empirical
+int get_lpf_vh(void){     return (sensor_data[0].lpf * 433894) >> 16; }		// XXX - empirical
+int get_curr_vo(void){    return (sensor_data[1].val * 165565) >> 16; } 	// XXX - empirical
 int get_curr_vi(void){    return sensor_data[2].val; }
 
-int get_curr_ii(void){    return sensor_data[3].val; }
-int get_curr_io(void){    return sensor_data[4].val; }
-int get_curr_ic(void){    return sensor_data[5].val; }
+int get_curr_ii(void){    return ((sensor_data[3].lpf - offset_ii) * 100663) >> 14; }
+int get_curr_io(void){    return ((sensor_data[4].lpf - offset_io) * 100663) >> 14; }
+int get_curr_ic(void){    return ((sensor_data[5].val - 2048     ) * 100663) >> 14; }
 
 int get_curr_temp1(void){ return temperature(sensor_data[6].val); }
 int get_curr_temp2(void){ return temperature(sensor_data[7].val); }
 int get_curr_temp3(void){ return temperature(sensor_data[8].val); }
+
+int
+get_max_temp(void){
+    // determine hottest temp
+    int t  = get_curr_temp1();
+    int tt = get_curr_temp2();
+    if( tt > t ) t = tt;
+    tt = get_curr_temp3();
+    if( tt > t ) t = tt;
+    return t;
+}
 
 DEFUN(testsensors, "test sensors")
 {
@@ -153,12 +192,21 @@ DEFUN(testsensors, "test sensors")
 
     while(1){
         read_sensors();
+        printf(" vh   vo   vi   ii   io   ic   t1   t2   t3\n");
         for(i=0; i<3; i++){
             for(j=0; j<9; j++){
                 printf("%04.4x ", sensor_data[j].hist[i]);
             }
             printf("\n");
         }
+        for(i=0; i<3; i++){
+            for(j=0; j<6; j++){
+                printf("%04.4x ", dmabuf[i*6 + j]);
+            }
+            printf("\n");
+        }
+
+        
         printf("\n");
         sleep(1);
     }
@@ -215,15 +263,18 @@ init_sensors(void){
 
     bootmsg(" sensors");
 
-    adc_init2( HW_ADC_VOLTAGE_INPUT,    2);
-    adc_init2( HW_ADC_CURRENT_INPUT,    2);
-    adc_init2( HW_ADC_VOLTAGE_OUTPUT,   2);
-    adc_init2( HW_ADC_CURRENT_OUTPUT,   2);
-    adc_init2( HW_ADC_VOLTAGE_HIGH,     2);
-    adc_init2( HW_ADC_CURRENT_CTL,      2);
-    adc_init2( HW_ADC_TEMPER_1,         2);
-    adc_init2( HW_ADC_TEMPER_2,         2);
-    adc_init2( HW_ADC_TEMPER_3,         2);
+    adc_init2( HW_ADC_VOLTAGE_INPUT,    1);
+    adc_init2( HW_ADC_CURRENT_INPUT,    1);
+    adc_init2( HW_ADC_VOLTAGE_OUTPUT,   1);
+    adc_init2( HW_ADC_CURRENT_OUTPUT,   1);
+    adc_init2( HW_ADC_VOLTAGE_HIGH,     1);
+    adc_init2( HW_ADC_CURRENT_CTL,      1);
+    adc_init2( HW_ADC_TEMPER_1,         1);
+    adc_init2( HW_ADC_TEMPER_2,         1);
+    adc_init2( HW_ADC_TEMPER_3,         1);
 
     _adc_init();
+
+    calibrate();
 }
+

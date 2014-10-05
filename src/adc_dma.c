@@ -7,40 +7,70 @@
 */
 
 
+/*
+  when it overruns, it has always transfered 4 sets of 32bit transfers
+
+*/
+
 #define USE_DMABUF
+
+
+#define DMAC		DMA2_Stream0
+
+#define DMASCR_MINC	(1<<10)
+#define DMASCR_DIR_M2P  (1<<6)
+#define DMASCR_PFCTRL	(1<<5)
+#define DMASCR_TEIE	(1<<2)
+#define DMASCR_TCIE	(1<<4)
+#define DMASCR_HIPRIO	(3<<16)
+#define DMASCR_MEM32	(2<<13)
+#define DMASCR_DEV32	(2<<11)
+#define DMASCR_EN	1
 
 
 static void
 _enable_dma(int cnt){
 
-    DROP_CRUMB("ena dma", 0,0);
+    DMAC->CR    &= ~1;		// clear EN first
+    DMA2->LIFCR |= 0x3D;	// clear irq
 
-    DMAC->CR   &= ~1;	// clear EN first
-    DMAC->PAR   = (u_long) & ADC->CDR;
-    DMAC->M0AR  = (u_long) & dmabuf;
-    DMAC->CR   &= (0xF<<28) | (1<<20);
-
-    DMAC->NDTR  = cnt;
-    DMAC->CR   |= DMASCR_TEIE | DMASCR_TCIE | DMASCR_MINC
-        | (0<<25)	// channel 0
-        | (3<<16) 	// high prio
-        | (2<<13)	// 32 bit memory
-        | (2<<11)	// 32 bit periph
+    // wait for it to disable
+    while( DMAC->CR & 1 )
         ;
 
-    ADC->CCR |= 2<<14;	// dma mode 2
+    // DMAC->CR   &= (0xF<<28) | (1<<20);
+    DMAC->CR   = 0;
 
+    DMAC->FCR   = DMAC->FCR & ~3;
+    DMAC->FCR  |= 1<<2;
+    DMAC->PAR   = (u_long) & ADC->CDR;
+    DMAC->M0AR  = (u_long) & dmabuf;
+    DMAC->NDTR  = cnt;
+
+    DMAC->CR   |= DMASCR_TEIE | DMASCR_TCIE | DMASCR_MINC | DMASCR_HIPRIO | DMASCR_MEM32 | DMASCR_DEV32
+        | (0<<25)	// channel 0
+        ;
+
+    ADC->CCR |= 3<<14;	// dma mode
+    ADC->CCR |= 2<<14;	// dma mode 2
+    ADC->CCR |= 6;	// regular simultaneous mode
     DMAC->CR |= 1;	// enable
+
+    DROP_CRUMB("ena dma", DMA2->LISR, ADC->CSR);
 
 }
 
 static void
 _disable_dma(void){
 
-    ADC->CCR &= ~(3<<14);	// dma mode
+    DROP_CRUMB("dis dma", DMA2->LISR,DMAC->NDTR);
     DMAC->CR &= ~(DMASCR_EN | DMASCR_TEIE | DMASCR_TCIE);
-    DMA2->LIFCR |= 0x3C;	// clear irq
-    DROP_CRUMB("dis dma", 0,0);
+    DMA2->LIFCR |= 0x3D;	// clear irq
+
+    ADC->CCR = ADC->CCR & ~(
+        (3<<14)		// dma mode
+        | (0x1F)	// multi-mode
+        );
 }
 
 
@@ -50,26 +80,24 @@ _adc_init(void){
     ADC1->CR1 |= 1<<8;		// scan mode
     ADC2->CR1 |= 1<<8;
 
-    ADC->CCR  |= 6		// simultaneous regular mode
-        | (1<<13)		// dma select
-        ;
-
     RCC->AHB1ENR |= 1<<22;	// DMA2
-    nvic_enable( IRQ_DMA2_STREAM0, 0x20 );
+    nvic_enable( IRQ_DMA2_STREAM0, 0x40 );
 }
 
 
 static void
-adc_get_all(int sr){
-    int i=0, n=0;
+adc_get_all(int sr, int si){
+    int i=0, n=0, v;
 
     sync_lock( &adclock, "adc.L" );
 
-    int v = ADC1->DR;	// clear any previous result
-    v = ADC2->DR;
+    //if( ADC1->SR & 2 ) v = ADC1->DR;	// clear any previous result
+    //if( ADC2->SR & 2 ) v = ADC2->DR;
 
-    ADC1->SR &= ~ SR_OVR;
-    ADC2->SR &= ~ SR_OVR;
+    //ADC1->SR &= ~ SR_OVR | (1<<4) | (1<<1);
+    //ADC2->SR &= ~ SR_OVR | (1<<4) | (1<<1);
+    ADC1->SR = ADC1->SR & ~0x3f;
+    ADC2->SR = ADC2->SR & ~0x3f;
 
     RESET_CRUMBS();
     bzero(dmabuf, sizeof(dmabuf));
@@ -84,20 +112,23 @@ adc_get_all(int sr){
     ADC2->SQR1 = (9-1)<<20;
 
     _enable_dma(9);
-    DROP_CRUMB("adc start", 0,0);
+    DROP_CRUMB("adc start", ADC->CSR, DMA2->LISR);
     adcstate = ADC_BUSY;
     ADC1->CR2 |= CR2_SWSTART;	// Go!
+    DROP_CRUMB("adc started", ADC->CSR, DMA2->LISR);
 
     // tsleep
+    utime_t to = get_hrtime() + 10000;
     while( adcstate == ADC_BUSY ){
         if( currproc ){
             int err = tsleep( &adc_get_all, -1, "adc", 1000);
-            if( err ){
+            DROP_CRUMB("adc-wake", DMA2->LISR, ADC->CSR);
+            if( get_hrtime() >= to ){
                 DROP_CRUMB("toed", err, ADC->CSR);
                 adcstate = ADC_ERROR;
             }
-            printf("adc: %d, %d, tr %d %d\n", err, adcstate, (int)currproc->timeout, (int)get_time());
-            usleep(10000);
+            //printf("adc: %d, %d, tr %d %d\n", err, adcstate, (int)currproc->timeout, (int)get_time());
+            //usleep(10000);
         }
     }
 
@@ -106,8 +137,8 @@ adc_get_all(int sr){
 
     if( adcstate == ADC_ERROR ){
         printf("adc error\n");
-        DUMP_CRUMBS();
     }
+    DUMP_CRUMBS();
 
     sync_unlock( &adclock );
 }
@@ -116,7 +147,7 @@ adc_get_all(int sr){
 void
 DMA2_Stream0_IRQHandler(void){
     int isr = DMA2->LISR & 0x3F;
-    DMA2->LIFCR |= 0x3C;	// clear irq
+    DMA2->LIFCR |= 0x3D;	// clear irq
 
     DROP_CRUMB("dmairq", isr, 0);
     if( isr & 8 ){

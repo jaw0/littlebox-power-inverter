@@ -27,7 +27,7 @@ static inline void
 _drop_crumb(const char *event, u_long arg0, u_long arg1) {
     struct crumb *crumb = &crumbs[cur_crumb % NR_CRUMBS];
     crumb->event = event;
-    crumb->when  = SysTick->LOAD - SysTick->VAL; // get_hrtime();
+    crumb->when  = get_hrtime();
     crumb->arg0  = arg0;
     crumb->arg1  = arg1;
     cur_crumb++;

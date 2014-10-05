@@ -62,8 +62,8 @@ TIM7_IRQHandler(void){
 
     TIMER->SR  &= ~1;		// clear UIF
 
-    cycle_step = (cycle_step + 1) % CYCLESTEPS;
-    half_cycle_step = cycle_step % HALFCYCLESTEPS;
+    cycle_step      = (cycle_step + 1) % CYCLESTEPS;
+    half_cycle_step =  cycle_step  % HALFCYCLESTEPS;
 
     wakeup( TIMER );
 }

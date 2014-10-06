@@ -71,6 +71,7 @@ int pwm_hbridge, pwm_boost;
 int curr_count;
 
 static void ready_hbridge(void);
+static void calc_itarg(void);
 
 extern const struct Menu guitop;
 
@@ -316,6 +317,8 @@ update_stats(void){
         ccy_po_sum = 0;
 
         curr_count = 0;
+
+        calc_itarg();
     }
 
     prev_ii = curr_ii; curr_ii = get_curr_ii(); ccy_ii_sum += curr_ii;
@@ -366,7 +369,7 @@ precharge_boost(void){
 #endif
 }
 
-static inline void
+static void
 calc_itarg(void){
 
     // calculate new target input current
@@ -416,17 +419,19 @@ update_boost(void){
 
     // d(vh)/dt = I / C
 
-    input_itarg = 150;	// XXX
+    int itarg = input_itarg;
+
     int vi  = 192; // XXX curr_vi;
 
-    input_err  = input_itarg - curr_ii;
-    input_adj  = 0; // KI1 * input_err - KI2 * prev_input_err + KI3 * prev_input_adj;
+    // we do not need to be very close ...
+    //input_err  = itarg - curr_ii;
+    //input_adj  = 0; // KI1 * input_err - KI2 * prev_input_err + KI3 * prev_input_adj;
 
     // this much current to the output
     int oi = (output_vtarg * curr_io) / vi;
 
     // this much current to the caps
-    int ci = input_itarg - oi;
+    int ci = itarg - oi;
 
     // NB: V units are Q.4, I are Q.8
     int dvh = ci * (1000000>>4) / (CONTROLFREQ * GPI_CAP);
@@ -438,8 +443,12 @@ update_boost(void){
         int max = (Q_VOLTS(MAX_VH_SOFT) - vi) * tr / OFFDELAY + vi;
         if( vh > max ) vh = max;
     }else{
-        if( vh > Q_VOLTS(MAX_VH_SOFT) ) vh = Q_VOLTS(MAX_VH_SOFT) + (vh - Q_VOLTS(MAX_VH_SOFT)) >> 1;
+        if( vh > Q_VOLTS(MAX_VH_SOFT) ) vh = (Q_VOLTS(MAX_VH_SOFT) + vh) >> 1;
         if( vh > Q_VOLTS(MAX_VH_HARD) ) vh = Q_VOLTS(MAX_VH_HARD);
+
+        if( vh < Q_VOLTS(MIN_VH_SOFT) ) vh = (Q_VOLTS(MIN_VH_SOFT) + vh) >> 1;
+        // cannot happen in production (450Vin, 340Vout)
+        if( vh < Q_VOLTS(MIN_VH_HARD) ) vh = (Q_VOLTS(MIN_VH_HARD) + vh) >> 1;
     }
 
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
@@ -450,8 +459,8 @@ update_boost(void){
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
 
-    prev_input_err = input_err;
-    prev_input_adj = input_adj;
+    //prev_input_err = input_err;
+    //prev_input_adj = input_adj;
 
 }
 
@@ -484,21 +493,25 @@ update_hbridge(void){
     }
 
     // predicted vh (Q:11.4)
-    int pvh = curr_vh + (curr_vh - prev_vh);
+    int pvh = get_lpf_vh() + (curr_vh - prev_vh);
 
     // target voltage
     int vt  = GPI_OUTV * st;
     output_vtarg = vt >> 10;	// Q.4
 
+
 #if 0
-    // this is ok, but slow
+    // this is ok (slight overshoot), but slow
     // control error
-    output_err += prev_output_vtarg - curr_vo;
     if( ABS(prev_output_vtarg) < Q_VOLTS(1) )       output_err = 0;
     if( prev_output_vtarg < 0 && output_vtarg > 0 ) output_err = 0;
     if( prev_output_vtarg > 0 && output_vtarg < 0 ) output_err = 0;
 
+    output_err += prev_output_vtarg - curr_vo;
     output_adj = KO1 * output_err - KO2 * prev_output_err + KO3 * prev_output_adj;
+#else
+    // QQQ - table lookup? simpler ctl?
+    output_err = prev_output_vtarg - curr_vo;
 #endif
 
     // output
@@ -614,8 +627,6 @@ inverter_ctl(void){
         read_sensors();
         update_stats();
         update_gate_freq();
-
-        if( !half_cycle_step ) calc_itarg();
 
         switch( inv_state ){
         case INV_STATE_ONDELAY:
@@ -864,6 +875,7 @@ DEFUN(profsine, "profile sine wave")
     utime_t tend = get_time() + 1000000;
     cycle_step = 0;
     reset_stats();
+    input_itarg = 100;
 
     while(1){
 

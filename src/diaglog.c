@@ -96,6 +96,7 @@ struct cycle_dat {
     short ii_ave, ii_min, ii_max;
     short vh_ave, vh_min, vh_max;
     short itarg;
+    short iterr, itadj;
 };
 
 struct stats_dat {
@@ -221,12 +222,13 @@ _show_stats(FILE *f){
 }
 
 _log_cycle(void){
-    if( !ROOMFOR(15) ) return;
+    if( !ROOMFOR(20) ) return;
     _lock();
     u_char *lc = logmem + logpos;
-    lc[0] = MKTAG(LRT_CYCLE, LRL_14B);
+    lc[0] = MKTAG(LRT_CYCLE, LRL_VAR);
+    lc[1] = 18;
 
-    struct cycle_dat *d = (struct cycle_dat*)(lc + 1);
+    struct cycle_dat *d = (struct cycle_dat*)(lc + 2);
     d->ii_ave = pcy_ii_ave;
     d->ii_min = pcy_ii_min;
     d->ii_max = pcy_ii_max;
@@ -234,8 +236,10 @@ _log_cycle(void){
     d->vh_min = pcy_vh_min;
     d->vh_max = pcy_vh_max;
     d->itarg  = input_itarg;
+    d->iterr  = itarg_err;
+    d->itadj  = (int)itarg_adj >> 1;
 
-    logpos += 15;
+    logpos += 20;
     _unlock();
 }
 

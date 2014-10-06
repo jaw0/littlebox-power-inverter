@@ -43,8 +43,8 @@ extern int curr_vo, prev_vo, ccy_vo_sum, pcy_vo_ave;
 extern int curr_vh, prev_vh, ccy_vh_sum, pcy_vh_ave, pcy_vh_min, pcy_vh_max, ccy_vh_min, ccy_vh_max;
 extern int curr_ic;
 
-extern int   output_err, prev_output_err, input_err, prev_input_err;
-extern float output_adj, prev_output_adj, input_adj, prev_input_adj;
+extern int   output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itarg_err;
+extern float output_adj, prev_output_adj, input_adj, prev_input_adj, itarg_adj, prev_itarg_adj;
 
 extern int output_vtarg, input_itarg;
 extern int pwm_hbridge, pwm_boost;

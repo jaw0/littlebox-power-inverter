@@ -31,13 +31,14 @@
 #else
 // testing
 #define	GPI_OUTHZ	60
-#define	GPI_OUTV	10
+#define	GPI_OUTV	16
 #define VOLTSINIT    	12
 
-#define VH_TARGET	20
+#define VH_TARGET	30
 #define MAX_VH_HARD	48
 #define MAX_VH_SOFT	40
-#define MIN_VH_SOFT	12
+#define MIN_VH_SOFT	24
+#define MIN_VH_HARD	18
 
 #define STOP_HARD_VH	100
 

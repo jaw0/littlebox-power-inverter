@@ -19,7 +19,7 @@
 
 // high enough, so that discontinuous mode is one-sided
 // at light loads, high duty cycles
-#define VH_TARGET	875
+#define VH_TARGET	700
 #define MAX_VH_HARD	950
 #define MAX_VH_SOFT	900
 #define MIN_VH_SOFT	500
@@ -49,11 +49,11 @@
 #define KO2	(8*287.81)
 #define KO3	0.96184
 
-#define KI1	1.0
-#define KI2	0.9900
-#define KI3	0.96184
+#define KI1	27
+#define KI2	20
+#define KI3	233
 
-#define KT1	0.1052
-#define KT2	0.0783
-#define KT3	0.9095
+#define KT1	27
+#define KT2	20
+#define KT3	233
 

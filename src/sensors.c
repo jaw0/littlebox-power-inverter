@@ -167,8 +167,8 @@ int get_lpf_vh(void){     return (sensor_data[0].lpf * 433894) >> 16; }		// XXX 
 int get_curr_vo(void){    return (sensor_data[1].val * 165565) >> 16; } 	// XXX - empirical
 int get_curr_vi(void){    return sensor_data[2].val; }
 
-int get_curr_ii(void){    return ((sensor_data[3].lpf - offset_ii) * 100663) >> 14; }
-int get_curr_io(void){    return ((sensor_data[4].lpf - offset_io) * 100663) >> 14; }
+int get_curr_ii(void){    return ((sensor_data[3].val - offset_ii) * 100663) >> 14; }
+int get_curr_io(void){    return ((sensor_data[4].val - offset_io) * 100663) >> 14; }
 int get_curr_ic(void){    return ((sensor_data[5].val - 2048     ) * 100663) >> 14; }
 
 int get_curr_temp1(void){ return temperature(sensor_data[6].val); }

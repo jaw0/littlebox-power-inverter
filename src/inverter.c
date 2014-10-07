@@ -55,14 +55,15 @@ int half_cycle_step = 0;
 int curr_ii, prev_ii, ccy_ii_sum, pcy_ii_ave, ppy_ii_ave, pcy_ii_min, pcy_ii_max, ccy_ii_min, ccy_ii_max;
 int curr_vi, prev_vi, ccy_vi_sum, pcy_vi_ave;
 int ccy_pi_sum, pcy_pi_ave, ppy_pi_ave;
-int ccy_po_sum, pcy_po_ave, ppy_po_ave;
+int ccy_po_sum, pcy_po_ave, ppy_po_ave, pcy_po_min, pcy_po_max;
 int curr_io, prev_io, ccy_io_sum, pcy_io_ave;
 int curr_vo, prev_vo, ccy_vo_sum, pcy_vo_ave;
 int curr_vh, prev_vh, ccy_vh_sum, pcy_vh_ave, ppy_vh_ave, pcy_vh_min, pcy_vh_max, ccy_vh_min, ccy_vh_max;
 int curr_ic;
 
 int   output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itarg_err;
-float output_adj, prev_output_adj, input_adj, prev_input_adj, itarg_adj, prev_itarg_adj;
+float output_adj, prev_output_adj;
+int   itarg_adj, prev_itarg_adj, input_adj, prev_input_adj;
 
 int output_vtarg, prev_output_vtarg;	// target output voltage
 int input_itarg,  prev_input_itarg;	// target input current
@@ -267,16 +268,19 @@ update_state(void){
 /****************************************************************/
 static void
 reset_stats(void){
-    output_vtarg = 0;
-    ccy_ii_sum = 0;
-    ccy_vh_sum = 0;
-    ccy_vi_sum = 0;
-    ccy_vo_sum = 0;
-    ccy_io_sum = 0;
-    ccy_pi_sum = 0;
-    ccy_po_sum = 0;
 
-    curr_count = 0;
+    input_err    = 0;
+    input_adj    = 0;
+    output_vtarg = 0;
+    ccy_ii_sum   = 0;
+    ccy_vh_sum   = 0;
+    ccy_vi_sum   = 0;
+    ccy_vo_sum   = 0;
+    ccy_io_sum   = 0;
+    ccy_pi_sum   = 0;
+    ccy_po_sum   = 0;
+
+    curr_count   = 0;
 }
 
 static void
@@ -344,33 +348,10 @@ update_stats(void){
 /****************************************************************/
 
 static void
-precharge_boost(void){
-#if 0
-    // over 5 secs, ramp Vh to VINIT
-    // this does not need to be precise
-
-    int tr = ondelay_until - get_time();
-    if( tr <= 0 ) return;
-    int vh = get_curr_vh();
-    int vr = Q_VOLTS(VOLTSINIT) - vh;
-    if( vr < 0 ) return;
-
-    vh += vr * (1000000/CONTROLFREQ) / tr;
-    if( vh > Q_VOLTS(VOLTSINIT) ) vh = Q_VOLTS(VOLTSINIT);
-
-    // D = 1 - Vi / Vo
-    int vi  = curr_vi;
-    int pwm = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
-
-    set_boost_pwm( pwm, BOOST_UNSYNCH );
-#else
-    // or not, this'll be easier to measure needed itarg
-    set_boost_pwm(0, BOOST_UNSYNCH);
-#endif
-}
-
-static void
 calc_itarg(void){
+
+    // RSN  - burst mode ? itarg = 0 | 2A, ...
+
 
     // calculate new target input current
     // previous ii +- vh move
@@ -378,16 +359,16 @@ calc_itarg(void){
     int va = 0;
 
     if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) && pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
-        // ouch
-        // QQQ - intentionally add ripple to ii? pick a dir?
-
+        // ouch - overloaded
+        // center the tiller, and try to maintain course
+        va = 0;
     }else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) ){
         // shift down
-        va = (pcy_vh_max - Q_VOLTS(MAX_VH_SOFT)) - (pcy_vh_min - Q_VOLTS(MIN_VH_SOFT));
+        va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
 
     }else if( pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
         // shift up
-        va = (Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) - (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min);
+        va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
         int va2 = Q_VOLTS(VH_TARGET) - pcy_vh_max;
         if( va2 > va ) va = va2;
 
@@ -397,14 +378,22 @@ calc_itarg(void){
     }
 
     // i = C dv f
-    itarg_err = GPI_CAP * va * 120 / (1000000>>4);
-    itarg_adj = KT1 * itarg_err - KT2 * prev_itarg_err + KT3 * prev_itarg_adj;
+#if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
+    itarg_err += (va * 1258) >> 14;
+#else
+    itarg_err += va * (GPI_CAP * GPI_OUTHZ * 2) / (1000000>>4);
+#   error "make me faster!"
+#endif
+    itarg_adj = (KT1 * itarg_err - KT2 * prev_itarg_err + KT3 * prev_itarg_adj) >> 8;
 
     prev_input_itarg  = input_itarg;
-    input_itarg      += itarg_adj;
+    input_itarg       = it + itarg_adj;
 
     prev_itarg_err = itarg_err;
     prev_itarg_adj = itarg_adj;
+
+    input_err = prev_input_err = 0;
+    input_adj = prev_input_adj = 0;
 }
 
 // in discont mode
@@ -419,27 +408,36 @@ update_boost(void){
 
     // d(vh)/dt = I / C
 
-    int itarg = input_itarg;
+    int itarg = 205; // input_itarg;
 
     int vi  = 192; // XXX curr_vi;
 
     // we do not need to be very close ...
-    //input_err  = itarg - curr_ii;
-    //input_adj  = 0; // KI1 * input_err - KI2 * prev_input_err + KI3 * prev_input_adj;
+    input_err += itarg - curr_ii;
+    // input_adj  = input_err; //(27 * input_err - 20 * prev_input_err + 233 * prev_input_adj) >> 8;
+    input_adj = (input_err + prev_input_adj) >> 1;
 
     // this much current to the output
     int oi = (output_vtarg * curr_io) / vi;
 
+    // QQQ - power factor?
+
     // this much current to the caps
-    int ci = itarg - oi;
+    int ci = itarg - oi + input_adj;
 
     // NB: V units are Q.4, I are Q.8
+#if (CONTROLFREQ == 21000) && (GPI_CAP == 40) && 0
+    int dvh = (ci * 1219) >> 14;
+#else
     int dvh = ci * (1000000>>4) / (CONTROLFREQ * GPI_CAP);
-    int vh  = curr_vh + dvh ;// + input_adj;
+//#   error "make me faster!"
+#endif
+
+    int vh  = curr_vh + dvh;
 
     if( inv_state == INV_STATE_SHUTTINGDOWN || inv_state == INV_STATE_FAULTINGDOWN ){
         // bring vh down
-        int tr = (shutdown_until - get_time()) >> 4;
+        int tr  = (shutdown_until - get_time()) >> 4;
         int max = (Q_VOLTS(MAX_VH_SOFT) - vi) * tr / OFFDELAY + vi;
         if( vh > max ) vh = max;
     }else{
@@ -447,8 +445,7 @@ update_boost(void){
         if( vh > Q_VOLTS(MAX_VH_HARD) ) vh = Q_VOLTS(MAX_VH_HARD);
 
         if( vh < Q_VOLTS(MIN_VH_SOFT) ) vh = (Q_VOLTS(MIN_VH_SOFT) + vh) >> 1;
-        // cannot happen in production (450Vin, 340Vout)
-        if( vh < Q_VOLTS(MIN_VH_HARD) ) vh = (Q_VOLTS(MIN_VH_HARD) + vh) >> 1;
+        if( vh < Q_VOLTS(MIN_VH_HARD) ) vh = Q_VOLTS(MIN_VH_HARD);
     }
 
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
@@ -459,16 +456,11 @@ update_boost(void){
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
 
-    //prev_input_err = input_err;
-    //prev_input_adj = input_adj;
+    prev_input_err = input_err;
+    prev_input_adj = input_adj;
 
 }
 
-void
-update_boost_burst(void){
-
-
-}
 
 /****************************************************************/
 

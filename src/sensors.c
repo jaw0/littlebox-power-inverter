@@ -165,7 +165,7 @@ temperature(int v){
 int get_curr_vh(void){    return (sensor_data[0].val * 433894) >> 16; }		// XXX - empirical
 int get_lpf_vh(void){     return (sensor_data[0].lpf * 433894) >> 16; }		// XXX - empirical
 int get_curr_vo(void){    return (sensor_data[1].val * 165565) >> 16; } 	// XXX - empirical
-int get_curr_vi(void){    return sensor_data[2].val; }
+int get_curr_vi(void){    return 192;    return sensor_data[2].val; }		// not hooked up
 
 int get_curr_ii(void){    return ((sensor_data[3].val - offset_ii) * 100663) >> 14; }
 int get_curr_io(void){    return ((sensor_data[4].val - offset_io) * 100663) >> 14; }

@@ -12,6 +12,8 @@
 #define Q_VOLTS(x)	((x) << VOLTSHIFT)
 #define Q_AMPS(x)	((x) << AMPSHIFT)
 
+#define VDIODE		1
+
 #if 0
 #define	GPI_OUTHZ	60
 #define	GPI_OUTV	340	// 240Vrms = 240*sqrt(2)

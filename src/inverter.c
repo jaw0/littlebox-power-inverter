@@ -55,23 +55,25 @@ int half_cycle_step = 0;
 int curr_ii, prev_ii, ccy_ii_sum, pcy_ii_ave, ppy_ii_ave, pcy_ii_min, pcy_ii_max, ccy_ii_min, ccy_ii_max;
 int curr_vi, prev_vi, ccy_vi_sum, pcy_vi_ave;
 int ccy_pi_sum, pcy_pi_ave, ppy_pi_ave;
-int ccy_po_sum, pcy_po_ave, ppy_po_ave, pcy_po_min, pcy_po_max;
+int curr_po, ccy_po_sum, pcy_po_ave, ppy_po_ave, pcy_po_min, pcy_po_max, ccy_po_min, ccy_po_max;
 int curr_io, prev_io, ccy_io_sum, pcy_io_ave;
 int curr_vo, prev_vo, ccy_vo_sum, pcy_vo_ave;
 int curr_vh, prev_vh, ccy_vh_sum, pcy_vh_ave, ppy_vh_ave, pcy_vh_min, pcy_vh_max, ccy_vh_min, ccy_vh_max;
 int curr_ic;
 
 int   output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itarg_err;
-float output_adj, prev_output_adj;
+int   output_adj, prev_output_adj;
 int   itarg_adj, prev_itarg_adj, input_adj, prev_input_adj;
+int   output_erri, input_erri, itarg_erri;
 
 int output_vtarg, prev_output_vtarg;	// target output voltage
 int input_itarg,  prev_input_itarg;	// target input current
 
 int pwm_hbridge, pwm_boost;
 int curr_count;
+int curr_cycle;
 
-static void ready_hbridge(void);
+static void ready_hbridge(void), ready_boost(void);
 static void calc_itarg(void);
 
 extern const struct Menu guitop;
@@ -86,6 +88,7 @@ extern const struct Menu guitop;
   [15m	- 6x12
   [16m	- 9x15
   [17m	- 10x20
+
 */
 
 static inline void
@@ -128,6 +131,7 @@ update_state(void){
         set_led_green(0);
 
         if( sw ){
+            // switch was turned on
             ondelay_until = get_time() + ONDELAY;
             inv_state = INV_STATE_ONDELAY;
             blinky_override = 1;
@@ -141,6 +145,7 @@ update_state(void){
     case INV_STATE_ONDELAY:
 
         if( !sw ){
+            // switch was turned off
             inv_state = INV_STATE_OFF;
             play(ivolume, "a-3");
             diag_counter ++;
@@ -150,7 +155,7 @@ update_state(void){
             print_ready();
             syslog("canceled");
         }else if( get_time() >= ondelay_until ){
-            ready_hbridge();
+            // countdown finished
             set_led_green( 255 );
             inv_state = INV_STATE_ONDELAY2;
             diag_counter = 0;
@@ -174,12 +179,14 @@ update_state(void){
         break;
 
     case INV_STATE_RUNNING:
-        set_led_green( 255 );
+        set_led_green( 127 );
 
         if( !sw ){
+            // switch was turned off
+            // quickly bring VH down, and stop at zero-xing
             shutdown_until = get_time() + OFFDELAY;
             inv_state = INV_STATE_SHUTTINGDOWN;
-            play(ivolume, "a-3");
+            play(ivolume, "a-3");	// debounce
             syslog("switch off");
         }
         break;
@@ -195,6 +202,7 @@ update_state(void){
                 fault_reason = "SWITCH ERR";
                 syslog("switch fault");
             }else{
+                // done ramping down
                 inv_state = INV_STATE_OFF;
                 play(ivolume, "f-3");
                 printbig("AC OFF\n");
@@ -208,6 +216,7 @@ update_state(void){
     case INV_STATE_FAULTED:
         set_led_green(255);
         set_led_red(255);
+        // we ramp down same as a shutdown, but end in faultedoff
         shutdown_until = get_time() + OFFDELAY;
         inv_state = INV_STATE_FAULTINGDOWN;
         printadj(fault_reason);
@@ -228,11 +237,13 @@ update_state(void){
         set_led_red(255);
 
         if( !sw ){
+            // switch turned off, resume normal operation
             inv_state = INV_STATE_OFF;
             play(ivolume, "f-3");
             set_led_red(0);
             print_ready();
         }else if( get_time() >= fault_song ){
+            // periodically, sing
             printadj(fault_reason);
             play(128, "t150[4 d+3d-3]");
             fault_song = get_time() + FAULTSONGT;
@@ -254,6 +265,7 @@ update_state(void){
         diag_counter = 0;
         diag_last    = 0;
     }
+    // toggle switch rapidly, or toggle switch once + press button
     if( (diag_mode != 2) && ((diag_counter >= 5) || (bn && diag_counter)) ){
         inv_state = INV_STATE_DIAG;
         diag_counter = 0;
@@ -269,8 +281,6 @@ update_state(void){
 static void
 reset_stats(void){
 
-    input_err    = 0;
-    input_adj    = 0;
     output_vtarg = 0;
     ccy_ii_sum   = 0;
     ccy_vh_sum   = 0;
@@ -279,8 +289,13 @@ reset_stats(void){
     ccy_io_sum   = 0;
     ccy_pi_sum   = 0;
     ccy_po_sum   = 0;
+    pcy_ii_ave   = 0;
+
+    itarg_erri   = 0;
+    prev_itarg_err = 0;
 
     curr_count   = 0;
+    curr_cycle   = 0;
 }
 
 static void
@@ -293,23 +308,26 @@ update_stats(void){
         // rotate stats
         ppy_ii_ave = pcy_ii_ave;
         ppy_vh_ave = pcy_vh_ave;
-        ppy_pi_ave = pcy_pi_ave;
+        // ppy_pi_ave = pcy_pi_ave;
         ppy_po_ave = pcy_po_ave;
         pcy_ii_ave = ccy_ii_sum / curr_count;
         pcy_vi_ave = ccy_vi_sum / curr_count;
         pcy_io_ave = ccy_io_sum / curr_count;
-        pcy_vo_ave = ccy_vo_sum / curr_count;	// ave(abs)
         pcy_vh_ave = ccy_vh_sum / curr_count;
-        pcy_pi_ave = ccy_pi_sum / curr_count;
         pcy_po_ave = ccy_po_sum / curr_count;
+        pcy_vo_ave = ccy_vo_sum / curr_count;	// ave(abs)
+        // pcy_pi_ave = ccy_pi_sum / curr_count;
 
         pcy_ii_min = ccy_ii_min;
         pcy_ii_max = ccy_ii_max;
         pcy_vh_min = ccy_vh_min;
         pcy_vh_max = ccy_vh_max;
+        pcy_po_min = ccy_po_min;
+        pcy_po_max = ccy_po_max;
 
         ccy_ii_min = ccy_ii_max = curr_ii;
         ccy_vh_min = ccy_vh_max = curr_vh;
+        ccy_po_min = ccy_po_max = curr_po;
 
         // clear
         ccy_ii_sum = 0;
@@ -321,6 +339,7 @@ update_stats(void){
         ccy_po_sum = 0;
 
         curr_count = 0;
+        if( curr_cycle < (1<<30) ) curr_cycle ++;
 
         calc_itarg();
     }
@@ -330,18 +349,23 @@ update_stats(void){
     prev_io = curr_io; curr_io = get_curr_io(); ccy_io_sum += curr_io;
     prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	if(sign) curr_vo = -curr_vo;
     prev_vh = curr_vh; curr_vh = get_curr_vh(); ccy_vh_sum += curr_vh;
-    ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
-    ccy_po_sum += (curr_io * curr_vo) >> 4;	// Q.8
+    // ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
+
+    curr_po = (curr_io * curr_vo) >> 4;	// Q.8
+    ccy_po_sum += curr_po;
     curr_ic = get_curr_ic();
 
     if( curr_ii < ccy_ii_min ) ccy_ii_min = curr_ii;
     if( curr_ii > ccy_ii_max ) ccy_ii_max = curr_ii;
     if( curr_vh < ccy_vh_min ) ccy_vh_min = curr_vh;
     if( curr_vh > ccy_vh_max ) ccy_vh_max = curr_vh;
+    if( curr_po < ccy_po_min ) ccy_po_min = curr_po;
+    if( curr_po > ccy_po_max ) ccy_po_max = curr_po;
 
     curr_count ++;
 
-    // RSN - determine power phase
+    // RSN - determine power phase from po_min + po_max
+    // 1 - max / (max - min) => phase
 }
 
 
@@ -355,13 +379,19 @@ calc_itarg(void){
 
     // calculate new target input current
     // previous ii +- vh move
-    int it = (pcy_pi_ave << 4) / pcy_vi_ave;
+    int it = curr_cycle ? pcy_ii_ave : 0;
     int va = 0;
 
-    if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) && pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
+    if( pcy_vh_max >= Q_VOLTS(MAX_VH_HARD) ){
+        // shift down - safety first!
+        va = pcy_vh_max - Q_VOLTS(MAX_VH_SOFT);
+    } else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) && pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
         // ouch - overloaded
-        // center the tiller, and try to maintain course
-        va = 0;
+        // centered, we have 120Hz ripple. if we move up or down, we'll have larger total ripple, but less at 120 (mostly 60 + odds)
+        // if we move up, it will be more efficient+less ripple, but we'll hid the hard limit + oscillate
+        // down is also safer...
+        // ergo, move down
+        va = pcy_vh_max - Q_VOLTS(MAX_VH_SOFT);
     }else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) ){
         // shift down
         va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
@@ -379,12 +409,28 @@ calc_itarg(void){
 
     // i = C dv f
 #if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
-    itarg_err += (va * 1258) >> 14;
+    itarg_err = (va * 1258) >> 14;
 #else
-    itarg_err += va * (GPI_CAP * GPI_OUTHZ * 2) / (1000000>>4);
+    itarg_err = va * (GPI_CAP * GPI_OUTHZ * 2) / (1000000>>4);
 #   error "make me faster!"
 #endif
-    itarg_adj = (KT1 * itarg_err - KT2 * prev_itarg_err + KT3 * prev_itarg_adj) >> 8;
+
+    int errd;
+
+    if( curr_cycle > 1 ){
+        // errd = itarg_err - prev_itarg_err;
+        itarg_erri += itarg_err;
+    }else{
+        // avoid windup when device is first powered on
+        // errd = 0;
+        itarg_erri = 0;
+    }
+
+    // oscillates, but works:
+    // itarg_adj = itarg_err + (itarg_err >> 2);
+    // the D only really adds noise...
+    // itarg_adj  = (154 * itarg_err + 51 * itarg_erri + 116 * errd) >> 8;
+    itarg_adj  = (144 * itarg_err + 29 * itarg_erri) >> 8;
 
     prev_input_itarg  = input_itarg;
     input_itarg       = it + itarg_adj;
@@ -392,7 +438,7 @@ calc_itarg(void){
     prev_itarg_err = itarg_err;
     prev_itarg_adj = itarg_adj;
 
-    input_err = prev_input_err = 0;
+    input_err = prev_input_err = input_erri = 0;
     input_adj = prev_input_adj = 0;
 }
 
@@ -402,23 +448,34 @@ calc_itarg(void){
 // Iinav = Iinpk D / 2
 
 
+static void
+ready_boost(void){
+
+    input_err = prev_input_err = input_erri = 0;
+    input_adj = prev_input_adj = 0;
+}
 
 static void
 update_boost(void){
 
     // d(vh)/dt = I / C
 
-    int itarg = 205; // input_itarg;
+    int itarg = input_itarg;
 
-    int vi  = 192; // XXX curr_vi;
+    int vi  = curr_vi;
 
     // we do not need to be very close ...
-    input_err += itarg - curr_ii;
+    input_err   = itarg - curr_ii;
+    input_erri += input_err;
     // input_adj  = input_err; //(27 * input_err - 20 * prev_input_err + 233 * prev_input_adj) >> 8;
-    input_adj = (input_err + prev_input_adj) >> 1;
+    input_adj = (input_err + input_erri + prev_input_adj) >> 1;
+    //input_adj = (576 * input_err + 460 * input_erri) >> 8;
 
     // this much current to the output
+    static oilpf = 0;
     int oi = (output_vtarg * curr_io) / vi;
+    // oilpf = (oi + 3 * oilpf) >> 2;
+    // RSN - replace measured io with model
 
     // QQQ - power factor?
 
@@ -426,11 +483,11 @@ update_boost(void){
     int ci = itarg - oi + input_adj;
 
     // NB: V units are Q.4, I are Q.8
-#if (CONTROLFREQ == 21000) && (GPI_CAP == 40) && 0
+#if (CONTROLFREQ == 21000) && (GPI_CAP == 40)
     int dvh = (ci * 1219) >> 14;
 #else
     int dvh = ci * (1000000>>4) / (CONTROLFREQ * GPI_CAP);
-//#   error "make me faster!"
+#   error "make me faster!"
 #endif
 
     int vh  = curr_vh + dvh;
@@ -441,16 +498,16 @@ update_boost(void){
         int max = (Q_VOLTS(MAX_VH_SOFT) - vi) * tr / OFFDELAY + vi;
         if( vh > max ) vh = max;
     }else{
-        if( vh > Q_VOLTS(MAX_VH_SOFT) ) vh = (Q_VOLTS(MAX_VH_SOFT) + vh) >> 1;
+        // NB - if we adjust at the soft limits, we add too much ripple
         if( vh > Q_VOLTS(MAX_VH_HARD) ) vh = Q_VOLTS(MAX_VH_HARD);
-
-        if( vh < Q_VOLTS(MIN_VH_SOFT) ) vh = (Q_VOLTS(MIN_VH_SOFT) + vh) >> 1;
-        if( vh < Q_VOLTS(MIN_VH_HARD) ) vh = Q_VOLTS(MIN_VH_HARD);
+        if( vh < output_vtarg + Q_VOLTS(VDIODE) ) vh = output_vtarg + Q_VOLTS(VDIODE);
+        // avoid runaway at no load
+        if( vh > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }
 
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
-    // XXX
+    // XXX - testing safety limit
     if( curr_vh > Q_VOLTS(2*MAX_VH_HARD) )
         pwm_boost = 0;
 
@@ -461,6 +518,29 @@ update_boost(void){
 
 }
 
+// regulate VH
+static void
+update_boost_dc(void){
+
+    int vi  = curr_vi;
+
+    int vht = output_vtarg + Q_VOLTS(6);
+    int vh  = curr_vh;
+
+    if( vh > Q_VOLTS(MAX_VH_SOFT) ) vht = 0;
+    if( vh > vht + (vht>>2) )       vht = 0;
+
+    pwm_boost = (vht > vi) ? 65535 - 65535 * vi / vht : 0;
+
+    // RSN - if vht => control + smooth
+    // vh is smooth+clean, but low
+
+    set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
+
+    prev_input_err = input_err;
+    prev_input_adj = input_adj;
+
+}
 
 /****************************************************************/
 
@@ -468,8 +548,9 @@ static void
 ready_hbridge(void){
 
     // reset vars
-    output_err = input_err = prev_output_err = prev_input_err = 0;
-    output_adj = input_adj = prev_output_adj = prev_input_adj = 0;
+    output_err  = input_err = prev_output_err = prev_input_err = 0;
+    output_adj  = input_adj = prev_output_adj = prev_input_adj = 0;
+    output_erri = 0;
 }
 
 void
@@ -503,11 +584,17 @@ update_hbridge(void){
     output_adj = KO1 * output_err - KO2 * prev_output_err + KO3 * prev_output_adj;
 #else
     // QQQ - table lookup? simpler ctl?
-    output_err = prev_output_vtarg - curr_vo;
+    // NB - overshoot varies with load
+    output_err   = output_vtarg - curr_vo;
+    output_erri += output_err;
+    output_adj   = (1035 * output_err + 207 * output_erri) >> 8;
 #endif
 
     // output
-    int pwm = ((vt << 6) /* + (int)output_adj */ ) / pvh ;
+    int pwm = ((vt << 6) /*+ (output_adj<<16)*/ ) / pvh ;
+    if( pwm >  0xFE00 ) pwm =  0xFE00;
+    if( pwm < -0xFE00 ) pwm = -0xFE00;
+
     // smooth
     pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
 
@@ -519,6 +606,35 @@ update_hbridge(void){
 
 }
 
+static int output_k;
+static void
+update_hbridge_dc(void){
+    // output_vtarg should be set by caller
+
+    int pvh = get_lpf_vh();
+
+    // update_stats flips the sign
+    if( curr_vo < 0 ) curr_vo = - curr_vo;
+
+    output_err   = output_vtarg - curr_vo;
+    output_erri += output_err;
+    output_adj   = (1035 * output_err + 207 * output_erri) >> 8;
+
+    // output
+    int pwm = ((output_vtarg + output_adj) << 16) / pvh ;
+    if( pwm >  65000 ) pwm =  65000;
+    if( pwm < -65000 ) pwm = -65000;
+
+    // smooth
+    pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
+
+    set_hbridge_pwm( pwm_hbridge );
+
+    prev_output_vtarg = output_vtarg;
+    prev_output_err   = output_err;
+    prev_output_adj   = output_adj;
+
+}
 
 /****************************************************************/
 
@@ -555,11 +671,11 @@ check_for_bad(void){
     static utime_t fault_start = 0;
     static logged = 0;
 
-#if 0
     // Vh too high?
     // II, IO too high?
     if( get_curr_vh() > Q_VOLTS(MAX_VH_SOFT) ) soft = "VH OVERLOAD";
     if( get_curr_vh() > Q_VOLTS(MAX_VH_HARD) ) hard = "VH OVERLOAD";
+#if 0
     if( pcy_ii_ave    > Q_AMPS(MAX_II_SOFT) )  soft = "II OVERLOAD";
     if( pcy_ii_ave    > Q_AMPS(MAX_II_HARD) )  hard = "II OVERLOAD";
     if( pcy_io_ave    > Q_AMPS(MAX_IO_SOFT) )  soft = "IO OVERLOAD";
@@ -613,6 +729,7 @@ inverter_ctl(void){
     currproc->prio = 0;
 
     while(1){
+        // timer7 => 21kHz
         tsleep( TIM7, -1, "timer", 10000);
 
         curr_t0 = get_hrtime();		// for logging
@@ -629,6 +746,9 @@ inverter_ctl(void){
 
             // start running at zero-xing
             inv_state = INV_STATE_RUNNING;
+            reset_stats();
+            ready_boost();
+            ready_hbridge();
             // fall thru
 
         case INV_STATE_RUNNING:
@@ -636,7 +756,7 @@ inverter_ctl(void){
         case INV_STATE_FAULTED:
         case INV_STATE_FAULTINGDOWN:
 
-            //XXX update_boost();
+            update_boost();
             update_hbridge();
             break;
 
@@ -707,6 +827,7 @@ init_inverter(void){
 }
 
 /****************************************************************/
+
 static const char * _short_mode[] = { "disable", "enable" };
 DEFUN(set_battle_short, "")
 {
@@ -867,6 +988,8 @@ DEFUN(profsine, "profile sine wave")
     utime_t tend = get_time() + 1000000;
     cycle_step = 0;
     reset_stats();
+    ready_boost();
+    ready_hbridge();
     input_itarg = 100;
 
     while(1){
@@ -875,6 +998,7 @@ DEFUN(profsine, "profile sine wave")
         read_sensors();
 
         update_stats();
+        check_for_bad();
         update_boost();
         update_hbridge();
 
@@ -895,6 +1019,66 @@ DEFUN(profsine, "profile sine wave")
     return 0;
 }
 
+static const char *_dc_voltage[] = {
+    "24", "48", "72", "100", "150", "200", "250", "300", "350", "400", "450", /* "500", "600", "700", "800", */
+};
+// generate high-voltage DC to feed into 2nd unit
+DEFUN(testdc, "generate DC output")
+{
+
+    int di = menu_get_str("Vout", ELEMENTSIN(_dc_voltage), _dc_voltage, 0);
+    if( di == -1 ) return 0;
+    int vout = atoi( _dc_voltage[di] );
+
+    currproc->flags |= PRF_REALTIME;
+    currproc->prio = 0;
+
+    diaglog_open( "log/dc.log");
+    diaglog_testres();
+    inv_state = INV_STATE_TEST;
+
+    printf("vout %d DC\n", vout);
+    printf("flip switch on\n");
+    while( !get_switch() ) usleep( 100000 );
+    play(ivolume, "ab");
+    set_led_green( 255 );
+
+    utime_t tend = get_time() + 1000000;
+    cycle_step = 0;
+    reset_stats();
+    ready_boost();
+    ready_hbridge();
+    input_itarg = 0;
+    output_vtarg = Q_VOLTS( vout );
+    output_k     = 0;
+
+    while(1){
+
+        curr_t0 = get_hrtime();		// for logging
+        read_sensors();
+
+        update_stats();
+        check_for_bad();
+        update_boost_dc();
+        update_hbridge_dc();
+        output_k ++;
+
+        if( !get_switch() ) break;
+
+        if( get_time() <= tend )
+            diaglog(0);
+
+        tsleep( TIM7, -1, "timer", 1000);
+    }
+
+    set_gates_safe();
+    diaglog_close();
+    play(ivolume, "ba");
+    set_led_green( 0 );
+    inv_state = INV_STATE_OFF;
+
+    return 0;
+}
 
 DEFUN(testloop, "test loop")
 {

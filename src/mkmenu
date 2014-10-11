@@ -1,0 +1,132 @@
+#!/usr/local/bin/perl
+# -*- perl -*-
+
+# Copyright (c) 2013
+# Author: Jeff Weisberg <jaw @ tcp4me.com>
+# Created: 2013-Sep-25 17:00 (EDT)
+# Function: 
+
+use strict;
+
+my $name = 'aaaa';
+my @name;
+my @menu;
+my @out;
+my %func;
+my %argv;
+my %var;
+
+menu( 'guitop', undef, line() );
+
+
+sub line {
+
+    while(1){
+        my $l = <>;
+        return unless defined $l;
+        $l =~ s/#.*//;
+        next if $l =~ /^\s*$/;
+        return $l;
+    }
+}
+
+sub menu {
+    my $me   = shift;
+    my $prev = shift;
+    my $f    = shift;
+
+    $prev ||= $me;
+
+    my($title, $default) = $f =~ /\s*([^[]+)\s*(\[.+\])?\s*\{/;
+
+    die "invalid menu\n" unless $title;
+    $title   = clean($title);
+    $default =~ s/\s*\[(.*)\]\s*/$1/;
+    $var{$default} = 1 if $default;
+    push @name, $me;
+
+    my @opt;
+
+    while($_ = line()){
+        last unless defined $_;
+        chop;
+        last if /^\s*\}/;
+        next if /^\s*$/;
+
+        if( /^\s*!/ ){
+            # copy code out
+            s/^\s*!\s*//;
+            push @out, $_;
+            next;
+        }
+
+        if( /\{\s*$/ ){
+            my($label, $rest) = /\s*(.+)\s*=>\s*(.+)/;
+            $label = clean($label);
+            my $id = 'menu_' . $name;
+            $name ++;
+            push @opt, qq[{ "$label", MTYP_MENU, (void*)&$id },\n];
+
+            menu($id, $me, $rest);
+        }elsif( /=>/ ){
+            my($label, $func, $arg) = /\s*(.+)\s*=>\s*([^(]+)\s*(\(.+\))?/;
+            $label = clean($label);
+            $func  = clean($func);
+            $arg =~ s/\s*\((.+)\)\s*/$1/;
+            my $id = "argv_empty";
+            if( $arg ){
+                $id = 'arg_' . $name;
+                $name ++;
+                $argv{$id} = $arg;
+            }
+
+            $func{ $func } = 1;
+            my $so = $id ? "sizeof($id)/4" : 0;
+            push @opt, qq[{ "$label", MTYP_FUNC, (void*)ui_f_$func, $so, $id },\n];
+        }elsif( /\.$/ ){
+            my($label) = /\s*(.+)\s*\.$/;
+            $label = clean($label);
+            push @opt, qq[{ "$label", MTYP_EXIT },\n];
+        }
+    }
+
+    push @menu, [ $me, $title, $prev, $default, \@opt ];
+}
+
+sub clean {
+    my $t = shift;
+
+    $t =~ s/^\s+//;
+    $t =~ s/\s+$//;
+    return $t;
+}
+
+print "// automatically generated - do not edit\n\n";
+print qq{#include "conf.h"\n};
+print qq{#include "menu.h"\n};
+print qq{#include "cli.h"\n};
+print qq{#include "defproto.h"\n\n};
+print "$_\n" for @out;
+print "const struct Menu $_;\n" for @name;
+print "extern int $_;\n"        for sort keys %var;
+
+# pass "-ui" as argv[0]
+print "const char * $_\[\] = { \"-ui\", $argv{$_} };\n" for sort keys %argv;
+print "const char * argv_empty[] = { \"-ui\" };\n";
+print "\n";
+
+for my $m (@menu){
+    my($name, $title, $prev, $default, $opt) = @$m;
+    $default = '&' . $default if $default;
+    $default ||= 0;
+
+    print "const struct Menu $name = {\n";
+    print qq[    "$title", &$prev, $default, {\n];
+    print "\t$_" for @$opt;
+    print "\t{}\n    }\n};\n";
+}
+
+################################################################
+
+#         sounds		=> playsong( "0", "6" )
+

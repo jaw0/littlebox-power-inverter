@@ -426,11 +426,8 @@ calc_itarg(void){
         itarg_erri = 0;
     }
 
-    // oscillates, but works:
-    // itarg_adj = itarg_err + (itarg_err >> 2);
-    // the D only really adds noise...
-    // itarg_adj  = (154 * itarg_err + 51 * itarg_erri + 116 * errd) >> 8;
-    itarg_adj  = (144 * itarg_err + 29 * itarg_erri) >> 8;
+    // PI control
+    itarg_adj  = (KIP * itarg_err + KII * itarg_erri) >> 8;
 
     prev_input_itarg  = input_itarg;
     input_itarg       = it + itarg_adj;
@@ -474,9 +471,7 @@ update_boost(void){
     // this much current to the output
     static oilpf = 0;
     int oi = (output_vtarg * curr_io) / vi;
-    // oilpf = (oi + 3 * oilpf) >> 2;
     // RSN - replace measured io with model
-
     // QQQ - power factor?
 
     // this much current to the caps
@@ -543,6 +538,7 @@ update_boost_dc(void){
 }
 
 /****************************************************************/
+static int output_k;
 
 static void
 ready_hbridge(void){
@@ -565,33 +561,26 @@ update_hbridge(void){
         st = (st * tr) / (OFFDELAY >> 4);
     }
 
-    // predicted vh (Q:11.4)
-    int pvh = get_lpf_vh() + (curr_vh - prev_vh);
+    int pvh = get_lpf_vh();
 
     // target voltage
     int vt  = GPI_OUTV * st;
     output_vtarg = vt >> 10;	// Q.4
 
-
-#if 0
-    // this is ok (slight overshoot), but slow
-    // control error
-    if( ABS(prev_output_vtarg) < Q_VOLTS(1) )       output_err = 0;
-    if( prev_output_vtarg < 0 && output_vtarg > 0 ) output_err = 0;
-    if( prev_output_vtarg > 0 && output_vtarg < 0 ) output_err = 0;
-
-    output_err += prev_output_vtarg - curr_vo;
-    output_adj = KO1 * output_err - KO2 * prev_output_err + KO3 * prev_output_adj;
-#else
-    // QQQ - table lookup? simpler ctl?
-    // NB - overshoot varies with load
     output_err   = output_vtarg - curr_vo;
+
+    if( ABS(output_vtarg) < Q_V_DIODEOUT ){
+        // the output diodes create a glitch near the zero-xing
+        // this helps, slightly...
+        output_err  = 0;
+    }
+
+    // PI control
     output_erri += output_err;
-    output_adj   = (1035 * output_err + 207 * output_erri) >> 8;
-#endif
+    output_adj   = (KOP * output_err + KOI * output_erri) >> 8;
 
     // output
-    int pwm = ((vt << 6) /*+ (output_adj<<16)*/ ) / pvh ;
+    int pwm = ((vt << 6) + (output_adj<<12) ) / pvh ;
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
@@ -606,7 +595,6 @@ update_hbridge(void){
 
 }
 
-static int output_k;
 static void
 update_hbridge_dc(void){
     // output_vtarg should be set by caller
@@ -991,6 +979,7 @@ DEFUN(profsine, "profile sine wave")
     ready_boost();
     ready_hbridge();
     input_itarg = 100;
+    output_k = 0;
 
     while(1){
 
@@ -1001,6 +990,7 @@ DEFUN(profsine, "profile sine wave")
         check_for_bad();
         update_boost();
         update_hbridge();
+        output_k ++;
 
         if( !get_switch() ) break;
 

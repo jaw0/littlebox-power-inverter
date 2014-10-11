@@ -1,0 +1,34 @@
+# ./mkmenu gpi.menu > menus.c
+
+Test Menu {
+    logging     => Logging {
+        enable          => logging("log/diag")
+        disable         => logging()
+    }
+
+    profile     => Profile {
+        Sine            => profsine
+        H-Br            => profhpwm
+    }
+
+    test        => Test {
+        DC              => testdc
+        serial          => debser
+    }
+
+#    diag	=> Diag Menu {
+#        sensors		=> testsensors
+#        imu		=> testimu
+#    }
+    settings	=> Settings {
+        volume          => volume
+        battle short    => set_battle_short
+        save		=> save_all
+    }
+    dazzle	=> Dazzle {
+        music       	=> playsong( "6", "13" )
+
+    }
+
+    Exit .
+}

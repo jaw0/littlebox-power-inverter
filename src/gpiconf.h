@@ -12,7 +12,8 @@
 #define Q_VOLTS(x)	((x) << VOLTSHIFT)
 #define Q_AMPS(x)	((x) << AMPSHIFT)
 
-#define VDIODE		1
+#define VDIODE		1	// generically
+#define Q_V_DIODEOUT	18	// output voltage drop
 
 #if 0
 #define	GPI_OUTHZ	60
@@ -47,15 +48,11 @@
 #endif
 
 // control params
-#define KO1	(8*339.41)
-#define KO2	(8*287.81)
-#define KO3	0.96184
+//  output voltage
+#define KOP	1035
+#define KOI	354
 
-#define KI1	27
-#define KI2	20
-#define KI3	233
-
-#define KT1	27
-#define KT2	20
-#define KT3	233
+//  input current
+#define KIP	144
+#define KII	29
 

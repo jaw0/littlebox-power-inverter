@@ -3966,8 +3966,8 @@ Source: http://www.osram.convergy.de/</description>
 <part name="VCCA7" library="jaw" deviceset="PWR-VCCA" device=""/>
 <part name="VCCA8" library="jaw" deviceset="PWR-VCCA" device=""/>
 <part name="C42" library="jaw" deviceset="C" device="0603" value=".1u"/>
-<part name="R21" library="jaw" deviceset="R" device="0603"/>
-<part name="C43" library="jaw" deviceset="C" device="0603"/>
+<part name="R21" library="jaw" deviceset="R" device="0603" value="100"/>
+<part name="C43" library="jaw" deviceset="C" device="0603" value=".1u"/>
 <part name="C44" library="jaw" deviceset="C" device="0603" value=".1u 12V"/>
 <part name="GND12" library="jaw" deviceset="PWR-GND" device=""/>
 <part name="VCCM3" library="jaw" deviceset="PWR-VCCM" device=""/>

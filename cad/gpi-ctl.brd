@@ -8,24 +8,24 @@
 </settings>
 <grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="10" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="power" color="5" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
 <layer number="15" name="signal" color="1" fill="1" visible="no" active="yes"/>
 <layer number="16" name="Bottom" color="6" fill="1" visible="no" active="yes"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="no" active="yes"/>
-<layer number="18" name="Vias" color="2" fill="1" visible="no" active="yes"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
 <layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
@@ -2061,8 +2061,10 @@ Please make sure your boards conform to these design rules.</description>
 <wire x1="64" y1="47.9" x2="64.2" y2="48.1" width="0.5" layer="15"/>
 <wire x1="76.05" y1="21.35" x2="76.05" y2="21.8" width="0.35" layer="1"/>
 <wire x1="76.05" y1="21.8" x2="74" y2="21.8" width="0.35" layer="1"/>
+<wire x1="75.55" y1="12.1" x2="75.1" y2="12.1" width="0.35" layer="1"/>
+<wire x1="75.1" y1="12.1" x2="74.7" y2="11.7" width="0.35" layer="1"/>
+<wire x1="74.7" y1="11.7" x2="74.7" y2="7.5" width="0.35" layer="1"/>
 <wire x1="74" y1="17.1" x2="74" y2="21.8" width="0" layer="19" extent="1-15"/>
-<wire x1="75.55" y1="12.1" x2="75" y2="16.1" width="0" layer="19" extent="1-15"/>
 </signal>
 <signal name="N$29">
 <contactref element="U1" pad="31"/>

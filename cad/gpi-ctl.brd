@@ -1246,7 +1246,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="NAME" x="37.4" y="54.4" size="1" layer="25" ratio="10"/>
 <attribute name="VALUE" x="33" y="55.284" size="1" layer="27" rot="R180"/>
 </element>
-<element name="C10" library="jaw" package="SMD0603" value=".001u" x="48.1" y="63.4" smashed="yes">
+<element name="C10" library="jaw" package="SMD0603" value=".1u" x="48.1" y="63.4" smashed="yes">
 <attribute name="NAME" x="51.022" y="63.016" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="50.822" y="63.114" size="1" layer="27" font="vector" ratio="10"/>
 </element>
@@ -1266,7 +1266,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="NAME" x="37.422" y="59.516" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="32.978" y="60.486" size="1" layer="27" font="vector" ratio="10" rot="R180"/>
 </element>
-<element name="C17" library="jaw" package="SMD0603" value=".001u" x="35.3" y="56.6" smashed="yes" rot="R180">
+<element name="C17" library="jaw" package="SMD0603" value=".1u" x="35.3" y="56.6" smashed="yes" rot="R180">
 <attribute name="NAME" x="37.422" y="56.116" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="32.978" y="57.086" size="1" layer="27" font="vector" ratio="10" rot="R180"/>
 </element>

@@ -1309,8 +1309,8 @@ LOGO</text>
 </device>
 <device name="DO-219AB" package="DO-219AB">
 <connects>
-<connect gate="G$1" pin="A" pad="C"/>
-<connect gate="G$1" pin="C" pad="A"/>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="C" pad="C"/>
 </connects>
 <technologies>
 <technology name=""/>

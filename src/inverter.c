@@ -489,29 +489,7 @@ update_boost(void){
 
     // RSN - replace measured io with model
     // QQQ - power factor?
-
-    if( (itarg < II_SYNC_MIN) && (lvh > Q_VOLTS(MIN_VH_SOFT)) && (lvh < Q_VOLTS(MAX_VH_SOFT)) ){
-#if 0
-        // stochastic dithering "burst mode" - to improve efficency
-        // a bit noisy + glitchy (need to force VH higher)
-        int p = (0xFFFFFF & random()) % II_SYNC_MIN;
-
-        if( p < itarg ){
-            itarg = II_SYNC_MIN;
-        }
-#else
-        if( random() & 1 ){
-            itarg *= 2;
-        }
-#endif
-        else{
-            pwm_boost = 0;
-            set_boost_pwm( 0, BOOST_UNSYNCH );
-            prev_input_err = input_err;
-            prev_input_adj = input_adj;
-            return;
-        }
-    }
+    // burst mode - less noisy to just lower boost freq
 
     // this much current to the caps
     int ci = itarg - oi + input_adj;

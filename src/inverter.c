@@ -171,6 +171,11 @@ update_state(void){
             set_led_green(0);
             set_led_white(64);
             usleep(437500);
+
+            // reset the clock if Vi drops below 300 (per the spec)
+            if( curr_vi < MIN_VI_SOFT ){
+                ondelay_until = get_time() + ONDELAY;
+            }
         }
         break;
 
@@ -347,7 +352,7 @@ update_stats(void){
     prev_ii = curr_ii; curr_ii = get_curr_ii(); ccy_ii_sum += curr_ii;
     prev_vi = curr_vi; curr_vi = get_curr_vi(); ccy_vi_sum += curr_vi;
     prev_io = curr_io; curr_io = get_curr_io(); ccy_io_sum += curr_io;
-    prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	if(sign) curr_vo = -curr_vo;
+    prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	//if(sign) curr_vo = -curr_vo;
     prev_vh = curr_vh; curr_vh = get_curr_vh(); ccy_vh_sum += curr_vh;
     // ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
 
@@ -403,8 +408,16 @@ calc_itarg(void){
         if( va2 > va ) va = va2;
 
     }else{
-        // try to keep the max near the top
-        va = Q_VOLTS(VH_TARGET) - pcy_vh_max;
+        if( curr_vi < Q_VOLTS(GPI_OUTV) ){
+            // keep the min above the output
+            va = Q_VOLTS(VH_TARGET) - pcy_vh_min;
+        }else{
+            // try to keep the max near the top
+            va = Q_VOLTS(VH_TARGET) - pcy_vh_max;
+        }
+        int va2 = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
+        if( va2 > va ) va = va2;
+
     }
 
     // i = C dv f
@@ -435,8 +448,9 @@ calc_itarg(void){
     prev_itarg_err = itarg_err;
     prev_itarg_adj = itarg_adj;
 
-    input_err = prev_input_err = input_erri = 0;
-    input_adj = prev_input_adj = 0;
+    // QQQ - reset if the load changes?
+    //input_adj = prev_input_adj = 0;
+    //input_err = prev_input_err = input_erri = 0;
 }
 
 // in discont mode
@@ -460,19 +474,44 @@ update_boost(void){
     int itarg = input_itarg;
 
     int vi  = curr_vi;
+    int lvh = get_lpf_vh();
 
     // we do not need to be very close ...
     input_err   = itarg - curr_ii;
     input_erri += input_err;
     // input_adj  = input_err; //(27 * input_err - 20 * prev_input_err + 233 * prev_input_adj) >> 8;
-    input_adj = (input_err + input_erri + prev_input_adj) >> 1;
     //input_adj = (576 * input_err + 460 * input_erri) >> 8;
+    input_adj = (input_err + input_erri + prev_input_adj) >> 1;
 
     // this much current to the output
-    static oilpf = 0;
+    // int oi = (output_vtarg * curr_io) / vi;
     int oi = (output_vtarg * curr_io) / vi;
+
     // RSN - replace measured io with model
     // QQQ - power factor?
+
+    if( (itarg < II_SYNC_MIN) && (lvh > Q_VOLTS(MIN_VH_SOFT)) && (lvh < Q_VOLTS(MAX_VH_SOFT)) ){
+#if 0
+        // stochastic dithering "burst mode" - to improve efficency
+        // a bit noisy + glitchy (need to force VH higher)
+        int p = (0xFFFFFF & random()) % II_SYNC_MIN;
+
+        if( p < itarg ){
+            itarg = II_SYNC_MIN;
+        }
+#else
+        if( random() & 1 ){
+            itarg *= 2;
+        }
+#endif
+        else{
+            pwm_boost = 0;
+            set_boost_pwm( 0, BOOST_UNSYNCH );
+            prev_input_err = input_err;
+            prev_input_adj = input_adj;
+            return;
+        }
+    }
 
     // this much current to the caps
     int ci = itarg - oi + input_adj;
@@ -485,7 +524,7 @@ update_boost(void){
 #   error "make me faster!"
 #endif
 
-    int vh  = curr_vh + dvh;
+    int vh  = lvh + dvh;
 
     if( inv_state == INV_STATE_SHUTTINGDOWN || inv_state == INV_STATE_FAULTINGDOWN ){
         // bring vh down
@@ -503,7 +542,7 @@ update_boost(void){
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
     // XXX - testing safety limit
-    if( curr_vh > Q_VOLTS(2*MAX_VH_HARD) )
+    if( curr_vh > 2 * Q_VOLTS(MAX_VH_HARD) )
         pwm_boost = 0;
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
@@ -580,14 +619,19 @@ update_hbridge(void){
     output_adj   = (KOP * output_err + KOI * output_erri) >> 8;
 
     // output
-    int pwm = ((vt << 6) + (output_adj<<12) ) / pvh ;
+    int pwm = ((vt << 6) /* + (output_adj<<12)*/ ) / pvh ;
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
     // smooth
-    pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
+    pwm_hbridge = pwm; // (pwm + 3 * pwm_hbridge) >> 2;
 
     int hv  = set_hbridge_pwm( pwm_hbridge );
+
+    // sync output
+    if( st >= 0 ) gpio_set( HW_GPIO_SYNC );
+    else          gpio_clear( HW_GPIO_SYNC );
+
 
     prev_output_vtarg = output_vtarg;
     prev_output_err   = output_err;
@@ -661,9 +705,11 @@ check_for_bad(void){
 
     // Vh too high?
     // II, IO too high?
-    if( get_curr_vh() > Q_VOLTS(MAX_VH_SOFT) ) soft = "VH OVERLOAD";
-    if( get_curr_vh() > Q_VOLTS(MAX_VH_HARD) ) hard = "VH OVERLOAD";
+    if( get_lpf_vh() > Q_VOLTS(MAX_VH_SOFT) ) soft = "VH OVERLOAD";
+    if( get_lpf_vh() > Q_VOLTS(MAX_VH_HARD) ) hard = "VH OVERLOAD";
 #if 0
+    if( pcy_vi_ave    > Q_VOLTS(MIN_VI_SOFT))  soft = "VI UNDERVOLT";
+    if( pcy_vi_ave    > Q_VOLTS(MIN_VI_HARD))  hard = "VI UNDERVOLT";
     if( pcy_ii_ave    > Q_AMPS(MAX_II_SOFT) )  soft = "II OVERLOAD";
     if( pcy_ii_ave    > Q_AMPS(MAX_II_HARD) )  hard = "II OVERLOAD";
     if( pcy_io_ave    > Q_AMPS(MAX_IO_SOFT) )  soft = "IO OVERLOAD";
@@ -695,7 +741,7 @@ check_for_bad(void){
             }
 
             fault_reason = hard;
-            if( !logged ) syslog("hard fault: %s", hard);
+            if( !logged ) syslog("hard fault: %s [vh %d]", hard, get_lpf_vh());
             logged = 1;
         }
 
@@ -978,7 +1024,8 @@ DEFUN(profsine, "profile sine wave")
     reset_stats();
     ready_boost();
     ready_hbridge();
-    input_itarg = 100;
+    fault_reason = 0;
+    input_itarg  = 100;
     output_k = 0;
 
     while(1){
@@ -987,12 +1034,13 @@ DEFUN(profsine, "profile sine wave")
         read_sensors();
 
         update_stats();
-        check_for_bad();
+        //check_for_bad();
         update_boost();
         update_hbridge();
         output_k ++;
 
         if( !get_switch() ) break;
+        //if( fault_reason )  break;
 
         if( get_time() <= tend )
             diaglog(0);
@@ -1001,6 +1049,7 @@ DEFUN(profsine, "profile sine wave")
     }
 
     set_gates_safe();
+    if( fault_reason ) printf("ERR: %s\n", fault_reason);
     diaglog_close();
     play(ivolume, "ba");
     set_led_green( 0 );

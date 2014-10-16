@@ -385,59 +385,20 @@ calc_itarg(void){
     // calculate new target input current
     // previous ii +- vh move
     int it = curr_cycle ? pcy_ii_ave : 0;
-    int va = 0;
 
-#if 0
+    // try to stay centered
+    int va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
+
     if( pcy_vh_max >= Q_VOLTS(MAX_VH_HARD) ){
         // shift down - safety first!
-        va = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
+        int va2 = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
+        if( va2 < va ) va = va2;
 
-    }else if( pcy_vh_min < Q_VOLTS(GPI_OUTV) ){
+    }else if( pcy_vh_min < Q_VOLTS(MIN_VH_HARD) ){
         // if we drop too low, the output clips
-        va = Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min;
-
-    }else{
-        // try to stay centered
-        va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
+        int va2 = Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min;
+        if( va2 > va ) va = va2;
     }
-#else
-     if( pcy_vh_max >= Q_VOLTS(MAX_VH_HARD) ){
-         // shift down - safety first!
-        va = pcy_vh_max - Q_VOLTS(MAX_VH_SOFT);
-
-     } else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) && pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
-        // ouch - overloaded
-        // centered, we have 120Hz ripple. if we move up or down, we'll have larger total ripple, but less at 120 (mostly 60 + odds)
-        // if we move up, it will be more efficient+less ripple, but we'll hid the hard limit + oscillate
-        // down is also safer...
-        // ergo, move down
-        va = pcy_vh_max - Q_VOLTS(MAX_VH_SOFT);
-    }else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) ){
-        // shift down
-        va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
-        va = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
-    }else if( pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
-        // shift up
-        va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
-        int va2 = Q_VOLTS(VH_TARGET) - pcy_vh_max;
-        if( va2 > va ) va = va2;
-    }else{
-        if( curr_vi < Q_VOLTS(GPI_OUTV) ){
-            // keep the min above the output
-            va = Q_VOLTS(VH_TARGET) - pcy_vh_min;
-        }else{
-            // try to keep the max near the top
-            va = Q_VOLTS(VH_TARGET) - pcy_vh_max;
-        }
-        int va2 = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
-        if( va2 > va ) va = va2;
-
-     }
-
-
-
-
-#endif
 
 
     // i = C dv f

@@ -384,7 +384,15 @@ calc_itarg(void){
 
     // calculate new target input current
     // previous ii +- vh move
-    int it = curr_cycle ? pcy_ii_ave : 0;
+    // int it = curr_cycle ? pcy_ii_ave : 0;
+
+    int it = 0;
+    if( curr_cycle ){
+        // XXX - seem to be off by 1.4
+        // and may need to be adj for power factor
+        it = (pcy_po_ave << 4) / curr_vi;
+        if( !(curr_cycle % 5) ) syslog("po %d it %d", pcy_po_ave, it);
+    }
 
     // try to stay centered
     int va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
@@ -398,8 +406,14 @@ calc_itarg(void){
         // if we drop too low, the output clips
         int va2 = Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min;
         if( va2 > va ) va = va2;
+        // if we clipped, increase by the estimated clippage
+        it = (it * Q_VOLTS(GPI_OUTV)) / pcy_vh_min;
+        // reset the boost
+        input_adj = prev_input_adj = 0;
+        input_err = prev_input_err = input_erri = 0;
     }
 
+    // XXX - this adjusts too slow
 
     // i = C dv f
 #if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
@@ -493,7 +507,7 @@ update_boost(void){
     }else{
         // NB - if we adjust at the soft limits, we add too much ripple
         if( vh > Q_VOLTS(MAX_VH_HARD) ) vh = Q_VOLTS(MAX_VH_HARD);
-        if( vh < output_vtarg + Q_VOLTS(VDIODE) ) vh = output_vtarg + Q_VOLTS(VDIODE);
+        if( vh < ABS(output_vtarg) + Q_VOLTS(2 * VDIODE) ) vh = ABS(output_vtarg) + Q_VOLTS(2 * VDIODE);
         // avoid runaway at no load
         if( vh > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }

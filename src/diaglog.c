@@ -549,8 +549,8 @@ diaglog(int tag){
     if( logmode == LOGMO_PROFILE ){
         _log_tag(tag);
         _log_sensor();
-        //_log_control();
-        //if( !(logstep % 35) )  _log_env();
+        _log_control();
+        if( !(logstep % 35) )  _log_env();
         if( !hcs )             _log_cycle();
         _log_slow();
         logstep ++;

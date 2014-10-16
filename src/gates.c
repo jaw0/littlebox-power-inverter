@@ -63,11 +63,13 @@ set_boost_pwm(int v, int m){
             // high-side gate off
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_50MHZ );
             gpio_clear( HW_GPIO_GATE_BOOST_H );
-            // TIM8->PSC = 3;	// quarter freq, to lower switching loss
+            // PSC = divider - 1
+            // RSN - adjust freq based on temperature
+            TIM8->PSC = 3;	// QQQ - quarter freq, to lower switching loss
         }else{
             // enable high-side gate
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
-            // TIM8->PSC = 0;	// normal freq
+            TIM8->PSC = 0;	// normal freq
         }
     }
 

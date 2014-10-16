@@ -12,8 +12,10 @@
 #define Q_VOLTS(x)	((x) << VOLTSHIFT)
 #define Q_AMPS(x)	((x) << AMPSHIFT)
 
+
 #define VDIODE		1	// generically
 #define Q_V_DIODEOUT	18	// output voltage drop
+
 
 #if 0
 #define	GPI_OUTHZ	60
@@ -27,6 +29,8 @@
 #define MAX_VH_SOFT	900
 #define MIN_VH_SOFT	500
 
+#define MIN_VI_SOFT	300	// from spec
+
 // boost stage shuts down if Vh gets this high
 // this should be set higher than MAX_VH_HARD
 #define STOP_HARD_VH	1000
@@ -34,14 +38,16 @@
 #else
 // testing
 #define	GPI_OUTHZ	60
-#define	GPI_OUTV	16
+#define	GPI_OUTV	24
 #define VOLTSINIT    	12
 
 #define VH_TARGET	30
-#define MAX_VH_HARD	48
-#define MAX_VH_SOFT	40
-#define MIN_VH_SOFT	24
-#define MIN_VH_HARD	18
+#define MAX_VH_HARD	72
+#define MAX_VH_SOFT	60
+#define MIN_VH_SOFT	32
+#define MIN_VH_HARD	28
+
+#define MIN_VI_SOFT	6
 
 #define STOP_HARD_VH	100
 

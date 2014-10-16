@@ -98,10 +98,7 @@ set_led_red(int v){
 
 void
 set_led_green(int v){
-    if( v > 32 )
-        gpio_set( HW_GPIO_LED_GREEN );
-    else
-        gpio_clear( HW_GPIO_LED_GREEN );
+    pwm_set( HW_TIMER_LED_GREEN, v & 255 );
 }
 
 void
@@ -121,22 +118,22 @@ DEFUN(testleds, "test leds")
     blinky_override = 1;
 
     for(i=0; i<2; i++){
-        set_led_green(255);
-        play(8, "a");
-        sleep(1);
-        set_led_green(0);
 
         for(j=0; j<255; j++){
+            set_led_green(j);
             set_led_red(j);
+            set_led_white(255-j);
             usleep(2000);
         }
         for(j=0; j<255; j++){
+            set_led_green(255-j);
             set_led_red(255-j);
             set_led_white(j);
             usleep(2000);
         }
 
         play(8, "c");
+        set_led_green(0);
         set_led_red(0);
         set_led_white(0);
     }

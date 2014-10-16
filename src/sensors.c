@@ -26,6 +26,7 @@
 #define SR_OVR		(1<<5)
 #define CR2_SWSTART	0x40000000
 #define CR2_ADON	1
+#define ADC_VREFINT	ADC_1_17
 
 
 static lock_t adclock;
@@ -137,39 +138,57 @@ calibrate(void){
 
     // actual io is 0 while idle
     // actual ii ~ ic while idle
-    // in Rev.1 ic should be precisely known
+    // in Rev.1 ic should be precisely known (but scaled differently)
 
     for(i=0; i<100; i++){
         read_sensors();
-        ti += sensor_data[3].val;
-        to += sensor_data[4].val;
-        tc += sensor_data[5].val - 2048;
+        ti += sensor_data[3].val;	// ii
+        to += sensor_data[4].val;	// io
+        tc += sensor_data[5].val;	// ic
     }
     offset_io = to / 100;
-    offset_ii = (ti - tc) / 100;
+    offset_ii = ti / 100; // RSN (ti - tc) / 100;
+
+    // bootmsg("ical %d %d\n", offset_ii, offset_io);
 }
 
 
 // returns .1 degrees C
 static inline int
 temperature(int v){
+    // Rev 0
     // sensor is a TC1047
     // 10mV/C
     // 500mV = 0C
+    // Rev 1 => LM61, 10mV/C, +600mV
 
     return v; //return ((v * 3300 + 2048) >> 12) - 500;
 }
 
+/*     adc * Rt * 3.3
+  V  = --------------  << 20   =  Rt(in k) * 256
+        3.3k * 4096
+
+
+        where Rt = Rx + 3.3
+*/
 
 // RSN - convert to proper calibrated units V:Q.4, A:Q.8
+// RSN - calibrate + temperature compensate
 int get_curr_vh(void){    return (sensor_data[0].val * 433894) >> 16; }		// XXX - empirical
 int get_lpf_vh(void){     return (sensor_data[0].lpf * 433894) >> 16; }		// XXX - empirical
-int get_curr_vo(void){    return (sensor_data[1].val * 165565) >> 16; } 	// XXX - empirical
+int get_curr_vo(void){    return (sensor_data[1].val * 150678) >> 16; } 	// measured 20141015
+int get_lpf_vo(void){     return (sensor_data[1].lpf * 150678) >> 16; } 	// "
 int get_curr_vi(void){    return 192;    return sensor_data[2].val; }		// not hooked up
 
-int get_curr_ii(void){    return ((sensor_data[3].val - offset_ii) * 100663) >> 14; }
-int get_curr_io(void){    return ((sensor_data[4].val - offset_io) * 100663) >> 14; }
-int get_curr_ic(void){    return ((sensor_data[5].val - 2048     ) * 100663) >> 14; }
+int get_curr_ii(void){    return ((sensor_data[3].lpf - offset_ii) * 100663) >> 14; }
+int get_curr_io(void){    return ((sensor_data[4].lpf - offset_io) * 100663) >> 14; }
+
+int get_curr_ic(void){
+    // LMP8640 Gain = 100, R = 0.01
+    // mA = v * 3.3/4096 * 1000
+    return (sensor_data[5].val * 3300 + 2048) >> 12 ;
+}
 
 int get_curr_temp1(void){ return temperature(sensor_data[6].val); }
 int get_curr_temp2(void){ return temperature(sensor_data[7].val); }
@@ -206,7 +225,6 @@ DEFUN(testsensors, "test sensors")
             printf("\n");
         }
 
-        
         printf("\n");
         sleep(1);
     }
@@ -272,6 +290,9 @@ init_sensors(void){
     adc_init2( HW_ADC_TEMPER_1,         1);
     adc_init2( HW_ADC_TEMPER_2,         1);
     adc_init2( HW_ADC_TEMPER_3,         1);
+
+    ADC->CCR |= 0x00C00000;	// enable Vrefint
+    adc_init( ADC_VREFINT, 1 );
 
     _adc_init();
 

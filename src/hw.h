@@ -21,10 +21,10 @@
 #define HW_GPIO_DPY_CS		GPIO_C7
 
 #define HW_GPIO_AUDIO		GPIO_B6
-
+#define HW_GPIO_SYNC		GPIO_A6
 #define HW_GPIO_LED_WHITE	GPIO_B5
 #define HW_GPIO_LED_RED		GPIO_B4
-#define HW_GPIO_LED_GREEN	GPIO_A6
+#define HW_GPIO_LED_GREEN	GPIO_C9
 
 #define HW_GPIO_CARD		GPIO_A11
 #define HW_GPIO_SWITCH		GPIO_C5
@@ -56,7 +56,7 @@
 
 #define HW_TIMER_LED_WHITE	TIMER_3_2	/* B4 */
 #define HW_TIMER_LED_RED	TIMER_3_1	/* B5  */
-#define HW_TIMER_LED_GREEN	TIMER_3_1	/* A6  */
+#define HW_TIMER_LED_GREEN	TIMER_3_4	/* A6  */
 
 #define HW_TIMER_AUDIO		TIMER_4_1	/* B6  */
 
@@ -91,7 +91,7 @@ extern int  gyro_x(void),  gyro_y(void),  gyro_z(void);
 
 extern void read_battery(void);
 extern int  battery_voltage(void), battery_current(void);
-
+extern unsigned int random();
 
 extern int volume_setting, volume, ivolume;
 extern const char const *songs[];

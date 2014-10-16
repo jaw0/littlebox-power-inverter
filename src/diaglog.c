@@ -763,7 +763,9 @@ diaglog_save(FILE *f){
         memcpy(bbuf, logmem+i, sz);
 
         // write
+        set_led_white(127);
         int w = fwrite(f, bbuf, sz);
+        set_led_white(0);
         if( w != sz ) diskerrs ++;
 
         i += sz;
@@ -811,7 +813,9 @@ _save_buf(int pos){
     }
 
     //printf("save log %d=%d+%d; pos %d save %d end %d\n", wl, l1, l2, logpos, savepos, logend);
+    set_led_white(127);
     int w = fwrite(logfd, bbuf, wl);
+    set_led_white(0);
     if( w != wl ) diskerrs ++;
     fflush(logfd);
     logproc_flush = 0;

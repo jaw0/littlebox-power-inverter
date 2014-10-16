@@ -51,6 +51,7 @@ utime_t curr_t0 = 0, prev_t0 = 0;
 int cycle_step = 0;	// 0 .. 349 = 1 60Hz cycle
 int half_cycle_step = 0;
 
+// stats
 // voltages Q.4, currents + power Q.8
 int curr_ii, prev_ii, ccy_ii_sum, pcy_ii_ave, ppy_ii_ave, pcy_ii_min, pcy_ii_max, ccy_ii_min, ccy_ii_max;
 int curr_vi, prev_vi, ccy_vi_sum, pcy_vi_ave;
@@ -61,14 +62,16 @@ int curr_vo, prev_vo, ccy_vo_sum, pcy_vo_ave;
 int curr_vh, prev_vh, ccy_vh_sum, pcy_vh_ave, ppy_vh_ave, pcy_vh_min, pcy_vh_max, ccy_vh_min, ccy_vh_max;
 int curr_ic;
 
-int   output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itarg_err;
-int   output_adj, prev_output_adj;
-int   itarg_adj, prev_itarg_adj, input_adj, prev_input_adj;
-int   output_erri, input_erri, itarg_erri;
+// control params
+int output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itarg_err;
+int output_adj, prev_output_adj;
+int itarg_adj, prev_itarg_adj, input_adj, prev_input_adj;
+int output_erri, input_erri, itarg_erri;
+int output_vtarg, prev_output_vtarg; 	// target output voltage
+int input_itarg,  prev_input_itarg; 	// target input current
 
-int output_vtarg, prev_output_vtarg;	// target output voltage
-int input_itarg,  prev_input_itarg;	// target input current
 
+// for reference
 int pwm_hbridge, pwm_boost;
 int curr_count;
 int curr_cycle;
@@ -352,7 +355,7 @@ update_stats(void){
     prev_ii = curr_ii; curr_ii = get_curr_ii(); ccy_ii_sum += curr_ii;
     prev_vi = curr_vi; curr_vi = get_curr_vi(); ccy_vi_sum += curr_vi;
     prev_io = curr_io; curr_io = get_curr_io(); ccy_io_sum += curr_io;
-    prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	//if(sign) curr_vo = -curr_vo;
+    prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	if(sign) curr_vo = -curr_vo;
     prev_vh = curr_vh; curr_vh = get_curr_vh(); ccy_vh_sum += curr_vh;
     // ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
 
@@ -379,18 +382,30 @@ update_stats(void){
 static void
 calc_itarg(void){
 
-    // RSN  - burst mode ? itarg = 0 | 2A, ...
-
-
     // calculate new target input current
     // previous ii +- vh move
     int it = curr_cycle ? pcy_ii_ave : 0;
     int va = 0;
 
+#if 0
     if( pcy_vh_max >= Q_VOLTS(MAX_VH_HARD) ){
         // shift down - safety first!
+        va = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
+
+    }else if( pcy_vh_min < Q_VOLTS(GPI_OUTV) ){
+        // if we drop too low, the output clips
+        va = Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min;
+
+    }else{
+        // try to stay centered
+        va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
+    }
+#else
+     if( pcy_vh_max >= Q_VOLTS(MAX_VH_HARD) ){
+         // shift down - safety first!
         va = pcy_vh_max - Q_VOLTS(MAX_VH_SOFT);
-    } else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) && pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
+
+     } else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) && pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
         // ouch - overloaded
         // centered, we have 120Hz ripple. if we move up or down, we'll have larger total ripple, but less at 120 (mostly 60 + odds)
         // if we move up, it will be more efficient+less ripple, but we'll hid the hard limit + oscillate
@@ -400,13 +415,12 @@ calc_itarg(void){
     }else if( pcy_vh_max > Q_VOLTS(MAX_VH_SOFT) ){
         // shift down
         va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
-
+        va = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
     }else if( pcy_vh_min < Q_VOLTS(MIN_VH_SOFT) ){
         // shift up
         va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
         int va2 = Q_VOLTS(VH_TARGET) - pcy_vh_max;
         if( va2 > va ) va = va2;
-
     }else{
         if( curr_vi < Q_VOLTS(GPI_OUTV) ){
             // keep the min above the output
@@ -418,7 +432,13 @@ calc_itarg(void){
         int va2 = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
         if( va2 > va ) va = va2;
 
-    }
+     }
+
+
+
+
+#endif
+
 
     // i = C dv f
 #if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
@@ -431,11 +451,11 @@ calc_itarg(void){
     int errd;
 
     if( curr_cycle > 1 ){
-        // errd = itarg_err - prev_itarg_err;
+        errd = itarg_err - prev_itarg_err;
         itarg_erri += itarg_err;
     }else{
         // avoid windup when device is first powered on
-        // errd = 0;
+        errd = 0;
         itarg_erri = 0;
     }
 
@@ -520,7 +540,7 @@ update_boost(void){
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
     // XXX - testing safety limit
-    if( curr_vh > 2 * Q_VOLTS(MAX_VH_HARD) )
+    if( curr_vh > Q_VOLTS(MAX_VH_HARD) )
         pwm_boost = 0;
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
@@ -584,7 +604,7 @@ update_hbridge(void){
     int vt  = GPI_OUTV * st;
     output_vtarg = vt >> 10;	// Q.4
 
-    output_err   = output_vtarg - curr_vo;
+    output_err   = prev_output_vtarg - curr_vo;
 
     if( ABS(output_vtarg) < Q_V_DIODEOUT ){
         // the output diodes create a glitch near the zero-xing
@@ -597,12 +617,13 @@ update_hbridge(void){
     output_adj   = (KOP * output_err + KOI * output_erri) >> 8;
 
     // output
+    // XXX - the adjust is good, but is causing itarg instability
     int pwm = ((vt << 6) /* + (output_adj<<12)*/ ) / pvh ;
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
     // smooth
-    pwm_hbridge = pwm; // (pwm + 3 * pwm_hbridge) >> 2;
+    pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
 
     int hv  = set_hbridge_pwm( pwm_hbridge );
 

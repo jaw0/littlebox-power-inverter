@@ -52,6 +52,7 @@ random(void){
     return rng_get();
 }
 
+
 /****************************************************************/
 void
 update_pwm_freq(void){
@@ -93,11 +94,8 @@ hw_init(void){
     pwm_set(   HW_TIMER_LED_WHITE, 0);
     gpio_init( HW_GPIO_LED_RED,    GPIO_AF(2) | GPIO_SPEED_2MHZ );
     pwm_set(   HW_TIMER_LED_RED,   0);
-    /*
     gpio_init( HW_GPIO_LED_GREEN,  GPIO_AF(2) | GPIO_SPEED_2MHZ );
     pwm_set(   HW_TIMER_LED_GREEN, 0);
-    */
-    gpio_init( HW_GPIO_LED_GREEN,  GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_2MHZ );
 
     // fans
     gpio_init( HW_GPIO_FAN1, GPIO_AF(1) | GPIO_SPEED_2MHZ );
@@ -105,6 +103,7 @@ hw_init(void){
     pwm_init(  HW_TIMER_FAN1, 10000, 255 );
 
     // ...
+    gpio_init( HW_GPIO_SYNC, GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_2MHZ );
 
     init_gates();	// start me first
     init_sensors();

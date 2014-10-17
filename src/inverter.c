@@ -67,16 +67,17 @@ int output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itar
 int output_adj, prev_output_adj;
 int itarg_adj, prev_itarg_adj, input_adj, prev_input_adj;
 int output_erri, input_erri, itarg_erri;
+int itarg_errd;
 int output_vtarg, prev_output_vtarg; 	// target output voltage
 int input_itarg,  prev_input_itarg; 	// target input current
-
+int req_ii_lpf;
 
 // for reference
 int pwm_hbridge, pwm_boost;
 int curr_count;
 int curr_cycle;
 
-static void ready_hbridge(void), ready_boost(void);
+static void reset_hbridge(void), reset_boost(void);
 static void calc_itarg(void);
 
 extern const struct Menu guitop;
@@ -316,15 +317,15 @@ update_stats(void){
         // rotate stats
         ppy_ii_ave = pcy_ii_ave;
         ppy_vh_ave = pcy_vh_ave;
-        // ppy_pi_ave = pcy_pi_ave;
+        ppy_pi_ave = pcy_pi_ave;
         ppy_po_ave = pcy_po_ave;
         pcy_ii_ave = ccy_ii_sum / curr_count;
-        pcy_vi_ave = ccy_vi_sum / curr_count;
         pcy_io_ave = ccy_io_sum / curr_count;
+        pcy_vi_ave = ccy_vi_sum / curr_count;
         pcy_vh_ave = ccy_vh_sum / curr_count;
-        pcy_po_ave = ccy_po_sum / curr_count;
         pcy_vo_ave = ccy_vo_sum / curr_count;	// ave(abs)
-        // pcy_pi_ave = ccy_pi_sum / curr_count;
+        pcy_po_ave = ccy_po_sum / curr_count;
+        pcy_pi_ave = ccy_pi_sum / curr_count;
 
         pcy_ii_min = ccy_ii_min;
         pcy_ii_max = ccy_ii_max;
@@ -350,6 +351,9 @@ update_stats(void){
         if( curr_cycle < (1<<30) ) curr_cycle ++;
 
         calc_itarg();
+
+        // something is windingup?
+        //output_erri = 0;
     }
 
     prev_ii = curr_ii; curr_ii = get_curr_ii(); ccy_ii_sum += curr_ii;
@@ -357,7 +361,7 @@ update_stats(void){
     prev_io = curr_io; curr_io = get_curr_io(); ccy_io_sum += curr_io;
     prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	if(sign) curr_vo = -curr_vo;
     prev_vh = curr_vh; curr_vh = get_curr_vh(); ccy_vh_sum += curr_vh;
-    // ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
+    ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
 
     curr_po = (curr_io * curr_vo) >> 4;	// Q.8
     ccy_po_sum += curr_po;
@@ -372,27 +376,101 @@ update_stats(void){
 
     curr_count ++;
 
-    // RSN - determine power phase from po_min + po_max
-    // 1 - max / (max - min) => phase
+    // RSN - determine power factor from po_min + po_max
+    //
+    //               max + min
+    // angle = acos( --------- )
+    //               max - min
+
+    // lead/lag : look at sign of io
+
 }
 
 
 /****************************************************************/
 
 static void
+reset_itarg(void){
+
+    itarg_erri       = 0;
+    prev_input_itarg = input_itarg  = 100;
+    prev_itarg_err   = itarg_err = 0;
+    prev_itarg_adj   = itarg_adj = 0;
+    req_ii_lpf       = 0;
+    cycle_step       = 0;
+}
+
+static int
+est_req_ii(void){
+
+    if( curr_cycle ){
+        // estimate required input current
+        // QQQ - may need to adj for power factor efficency loss
+        int vi = pcy_vi_ave ? pcy_vi_ave : curr_vi;
+        int pi = pcy_po_ave;
+
+        if( pi < P_DCM )
+            pi = (pi * 1167) >> 10;	// DCM mode, 14% power loss
+        else
+            pi = (pi * 1042) >> 10;	// 1.8% power loss
+
+        pi += get_lpf_ic() * 12;	// power to low voltage systems
+        int it = (pi<<4) / vi;		// estimated required input current
+        if( curr_cycle == 1 )
+            req_ii_lpf = it;
+        else
+            req_ii_lpf = (it + 3 * req_ii_lpf) >> 2;
+        return req_ii_lpf;
+    }
+
+    req_ii_lpf = 0;
+    return 0;
+}
+
+/*
+
+  determine target current + max error, vh ramp
+  have u_b() control ii + ramp vh
+  => less input ripple, more noise at output
+
+  determine ampl, offset + phase of VH
+  phase = lpf
+  ampl = control on ripple
+  => more input ripple, less noise at output
+
+*/
+
+
+
+static void
 calc_itarg(void){
+
+
+    int it = est_req_ii();
+
+    if( itarg_adj < 200 )
+        itarg_adj += 3;
+    input_itarg = 200 + itarg_adj;
+
+    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d", pcy_pi_ave, pcy_po_ave, it);
+
+    // determine phase
+    // determine dvh
+    // determine vh offset, ramp
+    
+
+}
+
+static void
+xxxcalc_itarg(void){
 
     // calculate new target input current
     // previous ii +- vh move
     // int it = curr_cycle ? pcy_ii_ave : 0;
 
-    int it = 0;
-    if( curr_cycle ){
-        // XXX - seem to be off by 1.4
-        // and may need to be adj for power factor
-        it = (pcy_po_ave << 4) / curr_vi;
-        if( !(curr_cycle % 5) ) syslog("po %d it %d", pcy_po_ave, it);
-    }
+    int it   = est_req_ii();
+    char iok = 1;
+
 
     // try to stay centered
     int va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
@@ -401,19 +479,25 @@ calc_itarg(void){
         // shift down - safety first!
         int va2 = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
         if( va2 < va ) va = va2;
-
+        reset_boost();
+        iok = 0;	// prevent windup
     }else if( pcy_vh_min < Q_VOLTS(MIN_VH_HARD) ){
+        // NB - this cannot happen under the "normal" conditions (Vin > Vout)
         // if we drop too low, the output clips
         int va2 = Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min;
         if( va2 > va ) va = va2;
-        // if we clipped, increase by the estimated clippage
+        // if we clipped, increase current by the estimated clippage
         it = (it * Q_VOLTS(GPI_OUTV)) / pcy_vh_min;
-        // reset the boost
-        input_adj = prev_input_adj = 0;
-        input_err = prev_input_err = input_erri = 0;
+        reset_boost();
+        reset_hbridge();
+        iok = 0;	// prevent windup
     }
 
-    // XXX - this adjusts too slow
+    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d va %d", pcy_pi_ave, pcy_po_ave, it, va);
+
+    // XXX - this adjusts too slow - recalibrate me
+    // and isn't very stable
+    // something not right...
 
     // i = C dv f
 #if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
@@ -423,29 +507,32 @@ calc_itarg(void){
 #   error "make me faster!"
 #endif
 
-    int errd;
-
     if( curr_cycle > 1 ){
-        errd = itarg_err - prev_itarg_err;
-        itarg_erri += itarg_err;
+        int errd = itarg_err - prev_itarg_err;
+        itarg_errd = ( errd + 3 * itarg_errd ) >> 2;
+        if( iok ) itarg_erri += itarg_err;
     }else{
         // avoid windup when device is first powered on
-        errd = 0;
+        itarg_errd = 0;
         itarg_erri = 0;
     }
-
-    // PI control
-    itarg_adj  = (KIP * itarg_err + KII * itarg_erri) >> 8;
-
+#if 0
+    // XXX test
+    // 8 - no, 12 - almost, 13 - yes
+    // 205 - no, 206 yes
+    it = 200;
+    itarg_adj = (205 * itarg_err ) >> 4;
+#else
+    // PID control
+    itarg_adj  = (1483 * itarg_err + 454 * itarg_erri ) >> 8;
+#endif
     prev_input_itarg  = input_itarg;
     input_itarg       = it + itarg_adj;
+
 
     prev_itarg_err = itarg_err;
     prev_itarg_adj = itarg_adj;
 
-    // QQQ - reset if the load changes?
-    //input_adj = prev_input_adj = 0;
-    //input_err = prev_input_err = input_erri = 0;
 }
 
 // in discont mode
@@ -455,7 +542,7 @@ calc_itarg(void){
 
 
 static void
-ready_boost(void){
+reset_boost(void){
 
     input_err = prev_input_err = input_erri = 0;
     input_adj = prev_input_adj = 0;
@@ -472,15 +559,14 @@ update_boost(void){
     int lvh = get_lpf_vh();
 
     // we do not need to be very close ...
-    input_err   = itarg - curr_ii;
+    input_err   = itarg - get_lpf_ii();
     input_erri += input_err;
     // input_adj  = input_err; //(27 * input_err - 20 * prev_input_err + 233 * prev_input_adj) >> 8;
     //input_adj = (576 * input_err + 460 * input_erri) >> 8;
     input_adj = (input_err + input_erri + prev_input_adj) >> 1;
 
     // this much current to the output
-    // int oi = (output_vtarg * curr_io) / vi;
-    int oi = (output_vtarg * curr_io) / vi;
+    int oi = (output_vtarg * get_lpf_io()) / vi;
 
     // RSN - replace measured io with model
     // QQQ - power factor?
@@ -507,7 +593,7 @@ update_boost(void){
     }else{
         // NB - if we adjust at the soft limits, we add too much ripple
         if( vh > Q_VOLTS(MAX_VH_HARD) ) vh = Q_VOLTS(MAX_VH_HARD);
-        if( vh < ABS(output_vtarg) + Q_VOLTS(2 * VDIODE) ) vh = ABS(output_vtarg) + Q_VOLTS(2 * VDIODE);
+        if( vh < ABS(output_vtarg) + Q_VOLTS(2 * VDIODE) ) vh = ABS(output_vtarg) + Q_VOLTS(6 * VDIODE);
         // avoid runaway at no load
         if( vh > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }
@@ -553,7 +639,7 @@ update_boost_dc(void){
 static int output_k;
 
 static void
-ready_hbridge(void){
+reset_hbridge(void){
 
     // reset vars
     output_err  = input_err = prev_output_err = prev_input_err = 0;
@@ -593,7 +679,7 @@ update_hbridge(void){
 
     // output
     // XXX - the adjust is good, but is causing itarg instability
-    int pwm = ((vt << 6) /* + (output_adj<<12)*/ ) / pvh ;
+    int pwm = ((vt << 6) + (output_adj<<12) ) / pvh ;
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
@@ -755,8 +841,8 @@ inverter_ctl(void){
             // start running at zero-xing
             inv_state = INV_STATE_RUNNING;
             reset_stats();
-            ready_boost();
-            ready_hbridge();
+            reset_boost();
+            reset_hbridge();
             // fall thru
 
         case INV_STATE_RUNNING:
@@ -994,12 +1080,11 @@ DEFUN(profsine, "profile sine wave")
     set_led_green( 255 );
 
     utime_t tend = get_time() + 1000000;
-    cycle_step = 0;
+    reset_itarg();
     reset_stats();
-    ready_boost();
-    ready_hbridge();
+    reset_boost();
+    reset_hbridge();
     fault_reason = 0;
-    input_itarg  = 100;
     output_k = 0;
 
     while(1){
@@ -1059,8 +1144,8 @@ DEFUN(testdc, "generate DC output")
     utime_t tend = get_time() + 1000000;
     cycle_step = 0;
     reset_stats();
-    ready_boost();
-    ready_hbridge();
+    reset_boost();
+    reset_hbridge();
     input_itarg = 0;
     output_vtarg = Q_VOLTS( vout );
     output_k     = 0;

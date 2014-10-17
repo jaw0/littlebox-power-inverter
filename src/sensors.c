@@ -162,7 +162,7 @@ temperature(int v){
     // 500mV = 0C
     // Rev 1 => LM61, 10mV/C, +600mV
 
-    return v; //return ((v * 3300 + 2048) >> 12) - 500;
+    return ((v * 3300 + 2048) >> 12) - 600;
 }
 
 /*     adc * Rt * 3.3
@@ -180,15 +180,21 @@ int get_lpf_vh(void){     return (sensor_data[0].lpf * 433894) >> 16; }		// XXX 
 int get_curr_vo(void){    return (sensor_data[1].val * 150678) >> 16; } 	// measured 20141015
 int get_lpf_vo(void){     return (sensor_data[1].lpf * 150678) >> 16; } 	// "
 int get_curr_vi(void){    return 192;    return sensor_data[2].val; }		// not hooked up
+int get_lpf_vi(void){     return 192;    return sensor_data[2].val; }		// not hooked up
 
-int get_curr_ii(void){    return ((sensor_data[3].lpf - offset_ii) * 100663) >> 14; }
-int get_curr_io(void){    return ((sensor_data[4].lpf - offset_io) * 100663) >> 14; }
+int get_curr_ii(void){    return ((sensor_data[3].val - offset_ii) * 100663) >> 14; }
+int get_lpf_ii(void){     return ((sensor_data[3].lpf - offset_ii) * 100663) >> 14; }
+int get_curr_io(void){    return ((sensor_data[4].val - offset_io) * 100663) >> 14; }
+int get_lpf_io(void){     return ((sensor_data[4].lpf - offset_io) * 100663) >> 14; }
 
 int get_curr_ic(void){
     // LMP8640 Gain = 100, R = 0.01
     // mA = v * 3.3/4096 * 1000
-    return (sensor_data[5].val * 3300 + 2048) >> 12 ;
+    // Q8 = v * 3.3/4096 * 256
+    return (sensor_data[5].val * 845 + 2048) >> 12;
 }
+int get_lpf_ic(void){	return (sensor_data[5].lpf * 845 + 2048) >> 12; }
+
 
 int get_curr_temp1(void){ return temperature(sensor_data[6].val); }
 int get_curr_temp2(void){ return temperature(sensor_data[7].val); }

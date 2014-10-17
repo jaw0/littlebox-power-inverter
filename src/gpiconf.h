@@ -5,6 +5,8 @@
 #define CONTROLFREQ	21000
 // also possible: 16800, 26880, 33600
 
+// R = 2 L F / 0.15 - margin
+#define R_DCM		384	// Ohms. DCM-CCM point
 
 #define VOLTSHIFT	4	// volts are Q.4
 #define AMPSHIFT	8	// amperes are Q.8
@@ -52,6 +54,9 @@
 #define STOP_HARD_VH	100
 
 #endif
+
+
+#define P_DCM		(GPI_OUTV * GPI_OUTV / R_DCM / 2)
 
 // control params
 //  output voltage

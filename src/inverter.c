@@ -375,14 +375,16 @@ est_req_ii(void){
         // QQQ - may need to adj for power factor efficency loss
         int vi = s_vi.ave ? s_vi.ave : s_vi._curr;
         int pi = s_po.ave;
-
+#if 0
         if( pi < P_DCM )
             pi = (pi * 1167) >> 10;	// DCM mode, 14% power loss
         else
             pi = (pi * 1042) >> 10;	// 1.8% power loss
 
         pi += get_lpf_ic() * 12;	// power to low voltage systems
+#endif
         int it = (pi<<4) / vi;		// estimated required input current
+
         if( curr_cycle == 1 )
             req_ii_lpf = it;
         else
@@ -472,7 +474,9 @@ calc_itarg(void){
     itarg_adj = (205 * itarg_err ) >> 4;
 #else
     // PID control
-    itarg_adj  = (1483 * itarg_err + 454 * itarg_erri ) >> 8;
+    // itarg_adj  = (1483 * itarg_err + 454 * itarg_erri ) >> 8;
+    itarg_adj  = (KIP * itarg_err + KII * itarg_erri) >> 8;
+    
 #endif
     prev_input_itarg  = input_itarg;
     input_itarg       = it + itarg_adj;

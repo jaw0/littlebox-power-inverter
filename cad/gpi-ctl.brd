@@ -1254,7 +1254,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="NAME" x="51.022" y="58.716" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="50.922" y="59.014" size="1" layer="27" font="vector" ratio="10"/>
 </element>
-<element name="C12" library="jaw" package="SMD0603" value=".1u" x="48.1" y="54.9" smashed="yes">
+<element name="C12" library="jaw" package="SMD0603" value=".01u" x="48.1" y="54.9" smashed="yes">
 <attribute name="NAME" x="51.022" y="54.516" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="50.922" y="54.514" size="1" layer="27" font="vector" ratio="10"/>
 </element>

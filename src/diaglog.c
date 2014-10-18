@@ -15,6 +15,7 @@
 #include "gpiconf.h"
 #include "util.h"
 #include "hw.h"
+#include "stats.h"
 #include "inverter.h"
 #include "defproto.h"
 
@@ -174,11 +175,11 @@ _log_sensor(void){
     lc[0] = MKTAG(LRT_SENSOR, LRL_14B);
 
     struct sensor_dat *d = (struct sensor_dat*)(lc + 1);
-    d->vi = curr_vi;
-    d->ii = curr_ii;
+    d->vi = s_vi._curr;
+    d->ii = s_ii._curr;
     d->vo = curr_vo;
-    d->io = curr_io;
-    d->vh = curr_vh;
+    d->io = s_io._curr;
+    d->vh = s_vh._curr;
     d->ph = pwm_hbridge >> 6;
     d->pb = pwm_boost   >> 6;
 
@@ -203,10 +204,10 @@ _log_stats(void){
     lc[0] = MKTAG(LRT_STATS, LRL_8B);
 
     struct stats_dat *d = (struct stats_dat*)(lc + 1);
-    d->vi_ave = pcy_vi_ave;
-    d->vo_ave = pcy_vo_ave;
-    d->ii_ave = pcy_ii_ave;
-    d->io_ave = pcy_io_ave;
+    d->vi_ave = s_vi.ave;
+    d->ii_ave = s_ii.ave;	// XXX (dupe)
+    d->vo_ave = 0;		// XXX
+    d->io_ave = s_io.ave;
 
     logpos += 9;
     _unlock();
@@ -229,12 +230,12 @@ _log_cycle(void){
     lc[1] = 18;
 
     struct cycle_dat *d = (struct cycle_dat*)(lc + 2);
-    d->ii_ave = pcy_ii_ave;
-    d->ii_min = pcy_ii_min;
-    d->ii_max = pcy_ii_max;
-    d->vh_ave = pcy_vh_ave;
-    d->vh_min = pcy_vh_min;
-    d->vh_max = pcy_vh_max;
+    d->ii_ave = s_ii.ave;
+    d->ii_min = s_ii.min;
+    d->ii_max = s_ii.max;
+    d->vh_ave = s_vh.ave;
+    d->vh_min = s_vh.min;
+    d->vh_max = s_vh.max;
     d->itarg  = input_itarg;
     d->iterr  = itarg_err;
     d->itadj  = (int)itarg_adj >> 1;

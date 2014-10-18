@@ -16,6 +16,7 @@
 
 #include "util.h"
 #include "hw.h"
+#include "stats.h"
 #include "inverter.h"
 #include "gpiconf.h"
 
@@ -53,13 +54,9 @@ int half_cycle_step = 0;
 
 // stats
 // voltages Q.4, currents + power Q.8
-int curr_ii, prev_ii, ccy_ii_sum, pcy_ii_ave, ppy_ii_ave, pcy_ii_min, pcy_ii_max, ccy_ii_min, ccy_ii_max;
-int curr_vi, prev_vi, ccy_vi_sum, pcy_vi_ave;
-int ccy_pi_sum, pcy_pi_ave, ppy_pi_ave;
-int curr_po, ccy_po_sum, pcy_po_ave, ppy_po_ave, pcy_po_min, pcy_po_max, ccy_po_min, ccy_po_max;
-int curr_io, prev_io, ccy_io_sum, pcy_io_ave;
-int curr_vo, prev_vo, ccy_vo_sum, pcy_vo_ave;
-int curr_vh, prev_vh, ccy_vh_sum, pcy_vh_ave, ppy_vh_ave, pcy_vh_min, pcy_vh_max, ccy_vh_min, ccy_vh_max;
+struct StatAve 		s_vi, s_pi, s_vo;
+struct StatAveMinMax 	s_ii, s_io, s_vh, s_po;
+int curr_vo, curr_ic;
 int curr_ic;
 
 // control params
@@ -177,7 +174,7 @@ update_state(void){
             usleep(437500);
 
             // reset the clock if Vi drops below 300 (per the spec)
-            if( curr_vi < MIN_VI_SOFT ){
+            if( s_vi._curr < MIN_VI_SOFT ){
                 ondelay_until = get_time() + ONDELAY;
             }
         }
@@ -290,16 +287,15 @@ update_state(void){
 static void
 reset_stats(void){
 
-    output_vtarg = 0;
-    ccy_ii_sum   = 0;
-    ccy_vh_sum   = 0;
-    ccy_vi_sum   = 0;
-    ccy_vo_sum   = 0;
-    ccy_io_sum   = 0;
-    ccy_pi_sum   = 0;
-    ccy_po_sum   = 0;
-    pcy_ii_ave   = 0;
+    _stm_reset( &s_ii );
+    _stm_reset( &s_io );
+    _stm_reset( &s_vh );
+    _stm_reset( &s_po );
+    _sta_reset( &s_vi );
+    _sta_reset( &s_vo );
+    _sta_reset( &s_pi );
 
+    output_vtarg = 0;
     itarg_erri   = 0;
     prev_itarg_err = 0;
 
@@ -315,64 +311,35 @@ update_stats(void){
     if( !half_cycle_step || (half_cycle_step < curr_count) ){
 
         // rotate stats
-        ppy_ii_ave = pcy_ii_ave;
-        ppy_vh_ave = pcy_vh_ave;
-        ppy_pi_ave = pcy_pi_ave;
-        ppy_po_ave = pcy_po_ave;
-        pcy_ii_ave = ccy_ii_sum / curr_count;
-        pcy_io_ave = ccy_io_sum / curr_count;
-        pcy_vi_ave = ccy_vi_sum / curr_count;
-        pcy_vh_ave = ccy_vh_sum / curr_count;
-        pcy_vo_ave = ccy_vo_sum / curr_count;	// ave(abs)
-        pcy_po_ave = ccy_po_sum / curr_count;
-        pcy_pi_ave = ccy_pi_sum / curr_count;
-
-        pcy_ii_min = ccy_ii_min;
-        pcy_ii_max = ccy_ii_max;
-        pcy_vh_min = ccy_vh_min;
-        pcy_vh_max = ccy_vh_max;
-        pcy_po_min = ccy_po_min;
-        pcy_po_max = ccy_po_max;
-
-        ccy_ii_min = ccy_ii_max = curr_ii;
-        ccy_vh_min = ccy_vh_max = curr_vh;
-        ccy_po_min = ccy_po_max = curr_po;
-
-        // clear
-        ccy_ii_sum = 0;
-        ccy_vh_sum = 0;
-        ccy_vi_sum = 0;
-        ccy_vo_sum = 0;
-        ccy_io_sum = 0;
-        ccy_pi_sum = 0;
-        ccy_po_sum = 0;
+        _stm_cycle( &s_ii );
+        _stm_cycle( &s_io );
+        _stm_cycle( &s_vh );
+        _stm_cycle( &s_po );
+        _sta_cycle( &s_vi );
+        _sta_cycle( &s_vo );
+        _sta_cycle( &s_pi );
 
         curr_count = 0;
         if( curr_cycle < (1<<30) ) curr_cycle ++;
 
         calc_itarg();
-
-        // something is windingup?
-        //output_erri = 0;
     }
 
-    prev_ii = curr_ii; curr_ii = get_curr_ii(); ccy_ii_sum += curr_ii;
-    prev_vi = curr_vi; curr_vi = get_curr_vi(); ccy_vi_sum += curr_vi;
-    prev_io = curr_io; curr_io = get_curr_io(); ccy_io_sum += curr_io;
-    prev_vo = curr_vo; curr_vo = get_curr_vo(); ccy_vo_sum += curr_vo;	if(sign) curr_vo = -curr_vo;
-    prev_vh = curr_vh; curr_vh = get_curr_vh(); ccy_vh_sum += curr_vh;
-    ccy_pi_sum += (curr_ii * curr_vi) >> 4;	// Q.8
+    int io = get_curr_io();
+    int ii = get_curr_ii();
+    int vi = get_curr_vi();
+    int vo = get_curr_vo(); if(sign) vo = -vo;
 
-    curr_po = (curr_io * curr_vo) >> 4;	// Q.8
-    ccy_po_sum += curr_po;
+    _stm_add( &s_ii, ii );
+    _stm_add( &s_io, io );
+    _stm_add( &s_vh, get_curr_vh() );
+    _sta_add( &s_vi, vi );
+    _stm_add( &s_po, (io * vo) >> 4 );
+    _sta_add( &s_pi, (ii * vi) >> 4 );
+
+    _sta_add( &s_vo, ABS(vo) );		// abs
+    curr_vo = vo;			// signed
     curr_ic = get_curr_ic();
-
-    if( curr_ii < ccy_ii_min ) ccy_ii_min = curr_ii;
-    if( curr_ii > ccy_ii_max ) ccy_ii_max = curr_ii;
-    if( curr_vh < ccy_vh_min ) ccy_vh_min = curr_vh;
-    if( curr_vh > ccy_vh_max ) ccy_vh_max = curr_vh;
-    if( curr_po < ccy_po_min ) ccy_po_min = curr_po;
-    if( curr_po > ccy_po_max ) ccy_po_max = curr_po;
 
     curr_count ++;
 
@@ -406,8 +373,8 @@ est_req_ii(void){
     if( curr_cycle ){
         // estimate required input current
         // QQQ - may need to adj for power factor efficency loss
-        int vi = pcy_vi_ave ? pcy_vi_ave : curr_vi;
-        int pi = pcy_po_ave;
+        int vi = s_vi.ave ? s_vi.ave : s_vi._curr;
+        int pi = s_po.ave;
 
         if( pi < P_DCM )
             pi = (pi * 1167) >> 10;	// DCM mode, 14% power loss
@@ -445,55 +412,36 @@ est_req_ii(void){
 static void
 calc_itarg(void){
 
-
-    int it = est_req_ii();
-
-    if( itarg_adj < 200 )
-        itarg_adj += 3;
-    input_itarg = 200 + itarg_adj;
-
-    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d", pcy_pi_ave, pcy_po_ave, it);
-
-    // determine phase
-    // determine dvh
-    // determine vh offset, ramp
-    
-
-}
-
-static void
-xxxcalc_itarg(void){
-
     // calculate new target input current
     // previous ii +- vh move
-    // int it = curr_cycle ? pcy_ii_ave : 0;
 
-    int it   = est_req_ii();
+    int it = curr_cycle ? s_ii.ave : 0;
+    // int it   = est_req_ii();
     char iok = 1;
 
 
     // try to stay centered
-    int va = ((Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max) + (Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min)) >> 1;
+    int va = ((Q_VOLTS(MAX_VH_SOFT) - s_vh.max) + (Q_VOLTS(MIN_VH_SOFT) - s_vh.min)) >> 1;
 
-    if( pcy_vh_max >= Q_VOLTS(MAX_VH_HARD) ){
+    if( s_vh.max >= Q_VOLTS(MAX_VH_HARD) ){
         // shift down - safety first!
-        int va2 = Q_VOLTS(MAX_VH_SOFT) - pcy_vh_max;
+        int va2 = Q_VOLTS(MAX_VH_SOFT) - s_vh.max;
         if( va2 < va ) va = va2;
         reset_boost();
         iok = 0;	// prevent windup
-    }else if( pcy_vh_min < Q_VOLTS(MIN_VH_HARD) ){
+    }else if( s_vh.min < Q_VOLTS(MIN_VH_HARD) ){
         // NB - this cannot happen under the "normal" conditions (Vin > Vout)
         // if we drop too low, the output clips
-        int va2 = Q_VOLTS(MIN_VH_SOFT) - pcy_vh_min;
+        int va2 = Q_VOLTS(MIN_VH_SOFT) - s_vh.min;
         if( va2 > va ) va = va2;
         // if we clipped, increase current by the estimated clippage
-        it = (it * Q_VOLTS(GPI_OUTV)) / pcy_vh_min;
+        it = (it * Q_VOLTS(GPI_OUTV)) / s_vh.min;
         reset_boost();
         reset_hbridge();
         iok = 0;	// prevent windup
     }
 
-    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d va %d", pcy_pi_ave, pcy_po_ave, it, va);
+    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d va %d", s_pi.ave, s_po.ave, it, va);
 
     // XXX - this adjusts too slow - recalibrate me
     // and isn't very stable
@@ -555,7 +503,7 @@ update_boost(void){
 
     int itarg = input_itarg;
 
-    int vi  = curr_vi;
+    int vi  = s_vi._curr;
     int lvh = get_lpf_vh();
 
     // we do not need to be very close ...
@@ -601,7 +549,7 @@ update_boost(void){
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
     // XXX - testing safety limit
-    if( curr_vh > Q_VOLTS(MAX_VH_HARD) )
+    if( s_vh._curr > Q_VOLTS(MAX_VH_HARD) )
         pwm_boost = 0;
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
@@ -615,10 +563,10 @@ update_boost(void){
 static void
 update_boost_dc(void){
 
-    int vi  = curr_vi;
+    int vi  = s_vi._curr;
 
     int vht = output_vtarg + Q_VOLTS(6);
-    int vh  = curr_vh;
+    int vh  = s_vh._curr;
 
     if( vh > Q_VOLTS(MAX_VH_SOFT) ) vht = 0;
     if( vh > vht + (vht>>2) )       vht = 0;

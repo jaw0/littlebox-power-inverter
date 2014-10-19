@@ -54,8 +54,8 @@ int half_cycle_step = 0;
 
 // stats
 // voltages Q.4, currents + power Q.8
-struct StatAve 		s_vi, s_pi, s_vo;
-struct StatAveMinMax 	s_ii, s_io, s_vh, s_po;
+struct StatAve 		s_vi, s_pi;
+struct StatAveMinMax 	s_vo, s_ii, s_io, s_vh, s_po;
 int curr_vo, curr_ic;
 
 // control params
@@ -74,7 +74,7 @@ int curr_count;
 int curr_cycle;
 
 static void reset_hbridge(void), reset_boost(void);
-static void calc_itarg(void);
+static void calc_itarg(void), calc_output(void);;
 
 extern const struct Menu guitop;
 
@@ -291,7 +291,7 @@ reset_stats(void){
     _stm_reset( &s_vh );
     _stm_reset( &s_po );
     _sta_reset( &s_vi );
-    _sta_reset( &s_vo );
+    _stm_reset( &s_vo );
     _sta_reset( &s_pi );
 
     output_vtarg = 0;
@@ -302,27 +302,24 @@ reset_stats(void){
     curr_cycle   = 0;
 }
 
-static void
-update_stats(void){
+static inline void
+rotate_stats(void){
+    _stm_cycle( &s_ii );
+    _stm_cycle( &s_io );
+    _stm_cycle( &s_vh );
+    _stm_cycle( &s_po );
+    _sta_cycle( &s_vi );
+    _stm_cycle( &s_vo );
+    _sta_cycle( &s_pi );
+
+    curr_count = 0;
+    if( curr_cycle < (1<<30) ) curr_cycle ++;
+}
+
+static inline void
+add_stats(void){
     short sign = (cycle_step > HALFCYCLESTEPS) ? -1 : 0;
 
-
-    if( !half_cycle_step || (half_cycle_step < curr_count) ){
-
-        // rotate stats
-        _stm_cycle( &s_ii );
-        _stm_cycle( &s_io );
-        _stm_cycle( &s_vh );
-        _stm_cycle( &s_po );
-        _sta_cycle( &s_vi );
-        _sta_cycle( &s_vo );
-        _sta_cycle( &s_pi );
-
-        curr_count = 0;
-        if( curr_cycle < (1<<30) ) curr_cycle ++;
-
-        calc_itarg();
-    }
 
     int io = get_curr_io();
     int ii = get_curr_ii();
@@ -336,11 +333,25 @@ update_stats(void){
     _stm_add( &s_po, (io * vo) >> 4 );
     _sta_add( &s_pi, (ii * vi) >> 4 );
 
-    _sta_add( &s_vo, ABS(vo) );		// abs
+    _stm_add( &s_vo, ABS(vo) );		// abs
     curr_vo = vo;			// signed
     curr_ic = get_curr_ic();
 
     curr_count ++;
+}
+
+static void
+update_stats(void){
+
+    if( !half_cycle_step || (half_cycle_step < curr_count) ){
+
+        rotate_stats();
+
+        calc_itarg();
+        calc_output();
+    }
+
+    add_stats();
 
     // RSN - determine power factor from po_min + po_max
     //
@@ -352,6 +363,15 @@ update_stats(void){
 
 }
 
+static void
+update_stats_dc(void){
+
+    if( !half_cycle_step || (half_cycle_step < curr_count) ){
+        rotate_stats();
+    }
+
+    add_stats();
+}
 
 /****************************************************************/
 
@@ -396,6 +416,7 @@ est_req_ii(void){
     return 0;
 }
 
+// determine target input current
 static void
 calc_itarg(void){
 
@@ -476,6 +497,25 @@ calc_itarg(void){
 // Iinpk = vin t / L
 // Iinav = Iinpk D / 2
 
+static void
+reset_output(){
+    // reset vars
+    output_err  = input_err = prev_output_err = prev_input_err = 0;
+    output_adj  = input_adj = prev_output_adj = prev_input_adj = 0;
+    output_erri = 0;
+}
+
+// adjust vout
+static void
+calc_output(void){
+
+    output_err   = s_vo.max - Q_VOLTS(GPI_OUTV);
+    output_erri += output_err;
+    output_adj   = (KOP * output_err + KOI * output_erri) >> 8;
+
+}
+
+/****************************************************************/
 
 static void
 reset_boost(void){
@@ -547,12 +587,18 @@ update_boost_dc(void){
 
     int vi  = s_vi._curr;
 
-    int vht = output_vtarg + Q_VOLTS(6);
+    int vht = output_vtarg + Q_VOLTS(12);
     int vh  = s_vh._curr;
 
-    if( vh > Q_VOLTS(MAX_VH_SOFT) ) vht = 0;
-    if( vh > vht + (vht>>2) )       vht = 0;
+    input_err   = vht - get_lpf_vh();
+    input_erri += input_err;
+    int adj     = (28 * input_err + 2 * input_erri) >> 8;
+    input_adj   = (adj + prev_input_adj) >> 1;
 
+    //if( vh > Q_VOLTS(MAX_VH_SOFT) ) vht = 0;
+    if( vh > vht + (vht>>2) ) vht = 0;
+
+    if( vht ) vht += input_adj;
     pwm_boost = (vht > vi) ? 65535 - 65535 * vi / vht : 0;
 
     // RSN - if vht => control + smooth
@@ -571,10 +617,6 @@ static int output_k;
 static void
 reset_hbridge(void){
 
-    // reset vars
-    output_err  = input_err = prev_output_err = prev_input_err = 0;
-    output_adj  = input_adj = prev_output_adj = prev_input_adj = 0;
-    output_erri = 0;
 }
 
 void
@@ -592,32 +634,21 @@ update_hbridge(void){
     int pvh = get_lpf_vh();
 
     // target voltage
-    int vt  = GPI_OUTV * st;
-    output_vtarg = vt >> 10;	// Q.4
-
-    output_err   = prev_output_vtarg - curr_vo;
-
-    if( ABS(output_vtarg) < Q_V_DIODEOUT ){
-        // the output diodes create a glitch near the zero-xing
-        // this helps, slightly...
-        output_err  = 0;
-    }
-
-    // PI control
-    output_erri += output_err;
-    output_adj   = (KOP * output_err + KOI * output_erri) >> 8;
+    // adjust for VH measurement error, temperature drift
+    int adj = 0; // (s_vh.min > Q_VOLTS(GPI_OUTV)) ? (s_vh.ave - Q_VOLTS(GPI_OUTV)) / 7 : 0;
+    int vam = Q_VOLTS(GPI_OUTV) - adj;
+    int vt  = vam * st;
+    output_vtarg = vt >> 14;	// Q.4
 
     // output
-    // XXX - the adjust is good, but is causing itarg instability
-    // and the output distorts due to phase shift
-    int pwm = ((vt << 6) /* + (output_adj<<12)*/ ) / pvh ;
+    int pwm = (vt << 2) / pvh ;
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
     // smooth
     pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
 
-    int hv  = set_hbridge_pwm( pwm_hbridge );
+    set_hbridge_pwm( pwm_hbridge );
 
     // sync output
     if( st >= 0 ) gpio_set( HW_GPIO_SYNC );
@@ -638,13 +669,14 @@ update_hbridge_dc(void){
 
     // update_stats flips the sign
     if( curr_vo < 0 ) curr_vo = - curr_vo;
-
+#if 0
     output_err   = output_vtarg - curr_vo;
     output_erri += output_err;
     output_adj   = (1035 * output_err + 207 * output_erri) >> 8;
+#endif
 
     // output
-    int pwm = ((output_vtarg + output_adj) << 16) / pvh ;
+    int pwm = ((output_vtarg) << 16) / pvh ;
     if( pwm >  65000 ) pwm =  65000;
     if( pwm < -65000 ) pwm = -65000;
 
@@ -773,6 +805,8 @@ inverter_ctl(void){
             // start running at zero-xing
             inv_state = INV_STATE_RUNNING;
             reset_stats();
+            reset_itarg();
+            reset_output();
             reset_boost();
             reset_hbridge();
             // fall thru
@@ -1015,6 +1049,7 @@ DEFUN(profsine, "profile sine wave")
     cycle_step = 0;
     reset_stats();
     reset_itarg();
+    reset_output();
     reset_boost();
     reset_hbridge();
     fault_reason = 0;
@@ -1078,6 +1113,8 @@ DEFUN(testdc, "generate DC output")
     utime_t tend = get_time() + 1000000;
     cycle_step = 0;
     reset_stats();
+    reset_itarg();
+    reset_output();
     reset_boost();
     reset_hbridge();
     input_itarg = 0;
@@ -1089,8 +1126,8 @@ DEFUN(testdc, "generate DC output")
         curr_t0 = get_hrtime();		// for logging
         read_sensors();
 
-        update_stats();
-        check_for_bad();
+        update_stats_dc();
+        //check_for_bad();
         update_boost_dc();
         update_hbridge_dc();
         output_k ++;
@@ -1105,10 +1142,12 @@ DEFUN(testdc, "generate DC output")
 
     set_gates_safe();
     diaglog_close();
+    printf("vh %d\n", s_vh.ave);
     play(ivolume, "ba");
     set_led_green( 0 );
     inv_state = INV_STATE_OFF;
 
+    sleep(5);
     return 0;
 }
 

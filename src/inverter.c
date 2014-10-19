@@ -65,7 +65,7 @@ int itarg_adj, prev_itarg_adj, input_adj, prev_input_adj;
 int output_erri, input_erri, itarg_erri;
 int output_vtarg, prev_output_vtarg; 	// target output voltage
 int input_itarg,  prev_input_itarg; 	// target input current
-
+int req_ii_lpf;
 
 // for reference
 int pwm_hbridge, pwm_boost;
@@ -355,6 +355,46 @@ update_stats(void){
 /****************************************************************/
 
 static void
+reset_itarg(void){
+
+    itarg_erri       = 0;
+    prev_input_itarg = input_itarg  = 100;
+    prev_itarg_err   = itarg_err = 0;
+    prev_itarg_adj   = itarg_adj = 0;
+    cycle_step       = 0;
+    req_ii_lpf       = 0;
+}
+
+static int
+est_req_ii(void){
+
+    if( curr_cycle ){
+        // estimate required input current
+        // QQQ - may need to adj for power factor efficency loss
+        int vi = s_vi.ave ? s_vi.ave : s_vi._curr;
+        int pi = s_po.ave;
+#if 1
+        if( pi < P_DCM )
+            pi = (pi * 1167) >> 10;	// DCM mode, 14% power loss
+        else
+            pi = (pi * 1042) >> 10;	// 1.8% power loss
+
+        pi += get_lpf_ic() * 12;	// power to low voltage systems
+#endif
+        int it = (pi<<4) / vi;		// estimated required input current
+
+        if( curr_cycle == 1 )
+            req_ii_lpf = it;
+        else
+            req_ii_lpf = (it + 3 * req_ii_lpf) >> 2;
+        return req_ii_lpf;
+    }
+
+    req_ii_lpf = 0;
+    return 0;
+}
+
+static void
 calc_itarg(void){
 
     // calculate new target input current
@@ -364,11 +404,14 @@ calc_itarg(void){
 
     // try to stay centered
     int va = ((Q_VOLTS(MAX_VH_SOFT) - s_vh.max) + (Q_VOLTS(MIN_VH_SOFT) - s_vh.min)) >> 1;
+    va /= 2;	// XXX cap to max
 
     if( s_vh.max >= Q_VOLTS(MAX_VH_HARD) ){
         // shift down - safety first!
         int va2 = Q_VOLTS(MAX_VH_SOFT) - s_vh.max;
         if( va2 < va ) va = va2;
+        // shift harder to avoid windup
+        it -= it>>2;
         reset_boost();
         iok = 0;	// prevent windup
     }else if( s_vh.min < Q_VOLTS(MIN_VH_HARD) ){
@@ -377,11 +420,12 @@ calc_itarg(void){
         int va2 = Q_VOLTS(MIN_VH_SOFT) - s_vh.min;
         if( va2 > va ) va = va2;
         // if we clipped, increase current by the estimated clippage
-        it = (it * Q_VOLTS(GPI_OUTV)) / s_vh.min;
+        it += it>>2;
         iok = 0;	// prevent windup
     }
 
 
+    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d va %d, eri %d", s_pi.ave, s_po.ave, it, va, est_req_ii());
 
     // i = C dv f
 #if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
@@ -473,16 +517,15 @@ update_boost(void){
         int max = (Q_VOLTS(MAX_VH_SOFT) - vi) * tr / OFFDELAY + vi;
         if( vh > max ) vh = max;
     }else{
-        // NB - if we adjust at the soft limits, we add too much ripple
-        if( vh > Q_VOLTS(MAX_VH_HARD) ) vh = Q_VOLTS(MAX_VH_HARD);
-        if( vh < output_vtarg + Q_VOLTS(VDIODE) ) vh = output_vtarg + Q_VOLTS(VDIODE);
+        // make sure we have enough
+        if( vh < output_vtarg + Q_VOLTS(4) ) vh = output_vtarg + Q_VOLTS(4);
         // avoid runaway at no load
         if( vh > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }
 
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
-    // XXX - testing safety limit
+    // safety limit
     if( s_vh._curr > Q_VOLTS(MAX_VH_HARD) )
         pwm_boost = 0;
 
@@ -561,6 +604,7 @@ update_hbridge(void){
 
     // output
     // XXX - the adjust is good, but is causing itarg instability
+    // and the output distorts due to phase shift
     int pwm = ((vt << 6) /* + (output_adj<<12)*/ ) / pvh ;
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
@@ -964,6 +1008,7 @@ DEFUN(profsine, "profile sine wave")
     utime_t tend = get_time() + 1000000;
     cycle_step = 0;
     reset_stats();
+    reset_itarg();
     reset_boost();
     reset_hbridge();
     fault_reason = 0;

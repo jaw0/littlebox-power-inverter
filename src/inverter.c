@@ -66,6 +66,7 @@ int output_erri, input_erri, itarg_erri;
 int output_vtarg, prev_output_vtarg; 	// target output voltage
 int input_itarg,  prev_input_itarg; 	// target input current
 int req_ii_lpf;
+int itarg_last_kick;
 
 // for reference
 int pwm_hbridge, pwm_boost;
@@ -361,6 +362,7 @@ reset_itarg(void){
     prev_input_itarg = input_itarg  = 100;
     prev_itarg_err   = itarg_err = 0;
     prev_itarg_adj   = itarg_adj = 0;
+    itarg_last_kick  = 0;
     cycle_step       = 0;
     req_ii_lpf       = 0;
 }
@@ -399,21 +401,20 @@ calc_itarg(void){
 
     // calculate new target input current
     // previous ii +- vh move
-    int it = curr_cycle ? s_ii.ave : 0;
-    int iok = 1;	// does not really help
+    int it  = curr_cycle ? s_ii.ave : 0;
 
     // try to stay centered
     int va = ((Q_VOLTS(MAX_VH_SOFT) - s_vh.max) + (Q_VOLTS(MIN_VH_SOFT) - s_vh.min)) >> 1;
-    va /= 2;	// XXX cap to max
+    // RSN - cap va to max - to avoid large I
 
     if( s_vh.max >= Q_VOLTS(MAX_VH_HARD) ){
         // shift down - safety first!
         int va2 = Q_VOLTS(MAX_VH_SOFT) - s_vh.max;
         if( va2 < va ) va = va2;
-        // shift harder to avoid windup
+        // shift harder to avoid clipping or tripping a fault
         it -= it>>2;
         reset_boost();
-        iok = 0;	// prevent windup
+        itarg_last_kick = curr_cycle;
     }else if( s_vh.min < Q_VOLTS(MIN_VH_HARD) ){
         // NB - this cannot happen under the "normal" conditions (Vin > Vout)
         // if we drop too low, the output clips
@@ -421,7 +422,6 @@ calc_itarg(void){
         if( va2 > va ) va = va2;
         // if we clipped, increase current by the estimated clippage
         it += it>>2;
-        iok = 0;	// prevent windup
     }
 
 
@@ -434,6 +434,17 @@ calc_itarg(void){
     itarg_err = va * (GPI_CAP * GPI_OUTHZ * 2) / (1000000>>4);
 #   error "make me faster!"
 #endif
+
+    // kick - improves convergence
+    if( (-va > (Q_VOLTS(MAX_VH_SOFT - MIN_VH_SOFT)>> 4) && s_vh.max >= Q_VOLTS(MAX_VH_SOFT) )
+        || ( -itarg_err > (input_itarg>>4)) ){
+        // but too often (avoid any 120Hz spikes)
+
+        if( curr_cycle - itarg_last_kick > 2 ){
+            reset_boost();
+            itarg_last_kick = curr_cycle;
+        }
+    }
 
     int errd;
 
@@ -483,20 +494,14 @@ update_boost(void){
     int vi  = s_vi._curr;
     int lvh = get_lpf_vh();
 
-    // we do not need to be very close ...
     input_err   = itarg - get_lpf_ii();
-    //input_err   = itarg - s_ii._curr;
     input_erri += input_err;
-    // input_adj  = input_err; //(27 * input_err - 20 * prev_input_err + 233 * prev_input_adj) >> 8;
-    //input_adj = (576 * input_err + 460 * input_erri) >> 8;
-    input_adj = (input_err + input_erri + prev_input_adj) >> 1;
+    input_adj   = (input_err + input_erri + prev_input_adj) >> 1;
 
     // this much current to the output
     int oi = (output_vtarg * s_io._curr) / vi;
 
-    // RSN - replace measured io with model
     // QQQ - power factor?
-    // burst mode - less noisy to just lower boost freq
 
     // this much current to the caps
     int ci = itarg - oi + input_adj;
@@ -520,7 +525,7 @@ update_boost(void){
         // make sure we have enough
         if( vh < output_vtarg + Q_VOLTS(4) ) vh = output_vtarg + Q_VOLTS(4);
         // avoid runaway at no load
-        if( vh > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
+        if( s_vh._curr > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }
 
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
@@ -646,7 +651,8 @@ update_hbridge_dc(void){
     // smooth
     pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
 
-    set_hbridge_pwm( pwm_hbridge );
+    // flip sign, so H1 is +, H2 is -
+    set_hbridge_pwm( - pwm_hbridge );
 
     prev_output_vtarg = output_vtarg;
     prev_output_err   = output_err;

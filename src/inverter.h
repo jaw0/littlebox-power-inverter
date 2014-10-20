@@ -36,8 +36,8 @@ enum BoostMode {
 extern int cycle_step, half_cycle_step;
 extern utime_t curr_t0, prev_t0;
 
-extern struct StatAve 		s_vi, s_pi, s_vo;
-extern struct StatAveMinMax 	s_ii, s_io, s_vh, s_po;
+extern struct StatAve 		s_vi, s_pi;
+extern struct StatAveMinMax 	s_vo, s_ii, s_io, s_vh, s_po;
 extern int curr_vo, curr_ic;
 
 extern int   output_err, prev_output_err, input_err, prev_input_err, itarg_err, prev_itarg_err;

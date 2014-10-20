@@ -175,8 +175,8 @@ temperature(int v){
 
 // RSN - convert to proper calibrated units V:Q.4, A:Q.8
 // RSN - calibrate + temperature compensate
-int get_curr_vh(void){    return (sensor_data[0].val * 507660) >> 16; }		// measured 20141018
-int get_lpf_vh(void){     return (sensor_data[0].lpf * 507660) >> 16; }		// "
+int get_curr_vh(void){    return (sensor_data[0].val * 512270) >> 16; }		// measured 20141018
+int get_lpf_vh(void){     return (sensor_data[0].lpf * 512270) >> 16; }		// "
 int get_curr_vo(void){    return (sensor_data[1].val * 150678) >> 16; } 	// measured 20141015
 int get_lpf_vo(void){     return (sensor_data[1].lpf * 150678) >> 16; } 	// "
 int get_curr_vi(void){    return 192;    return sensor_data[2].val; }		// not hooked up

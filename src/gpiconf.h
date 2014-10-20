@@ -17,6 +17,7 @@
 
 #define VDIODE		1	// generically
 #define Q_V_DIODEOUT	18	// output voltage drop
+#define Q_V_ELEVATOR	100	// VH must be at least this much more than VO
 
 
 #if 0
@@ -40,18 +41,16 @@
 #else
 // testing
 #define	GPI_OUTHZ	60
-#define	GPI_OUTV	24
-#define VOLTSINIT    	12
+#define	GPI_OUTV	48
 
-#define VH_TARGET	30
-#define MAX_VH_HARD	72
-#define MAX_VH_SOFT	60
-#define MIN_VH_SOFT	32
-#define MIN_VH_HARD	28
+#define MAX_VH_HARD	100
+#define MAX_VH_SOFT	90
+#define MIN_VH_SOFT	60
+#define MIN_VH_HARD	50
 
 #define MIN_VI_SOFT	6
 
-#define STOP_HARD_VH	100
+#define STOP_HARD_VH	200
 
 #endif
 

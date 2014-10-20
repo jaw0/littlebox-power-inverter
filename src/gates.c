@@ -65,6 +65,7 @@ set_boost_pwm(int v, int m){
             gpio_clear( HW_GPIO_GATE_BOOST_H );
             // PSC = divider - 1
             // RSN - adjust freq based on temperature
+            // RSN - make sure we don't saturate
             TIM8->PSC = 3;	// QQQ - quarter freq, to lower switching loss
         }else{
             // enable high-side gate

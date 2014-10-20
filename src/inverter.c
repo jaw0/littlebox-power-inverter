@@ -318,8 +318,7 @@ rotate_stats(void){
 
 static inline void
 add_stats(void){
-    short sign = (cycle_step > HALFCYCLESTEPS) ? -1 : 0;
-
+    short sign = (cycle_step >= HALFCYCLESTEPS) ? -1 : 0;
 
     int io = get_curr_io();
     int ii = get_curr_ii();
@@ -368,6 +367,7 @@ update_stats_dc(void){
 
     if( !half_cycle_step || (half_cycle_step < curr_count) ){
         rotate_stats();
+        calc_output();
     }
 
     add_stats();
@@ -408,7 +408,7 @@ est_req_ii(void){
         if( curr_cycle == 1 )
             req_ii_lpf = it;
         else
-            req_ii_lpf = (it + 3 * req_ii_lpf) >> 2;
+            req_ii_lpf = (it + req_ii_lpf) >> 1;
         return req_ii_lpf;
     }
 
@@ -484,12 +484,8 @@ calc_itarg(void){
     prev_input_itarg  = input_itarg;
     input_itarg       = it + itarg_adj;
 
-    prev_itarg_err = itarg_err;
-    prev_itarg_adj = itarg_adj;
-
-    // QQQ - reset if the load changes?
-    //input_adj = prev_input_adj = 0;
-    //input_err = prev_input_err = input_erri = 0;
+    prev_itarg_err    = itarg_err;
+    prev_itarg_adj    = itarg_adj;
 }
 
 // in discont mode
@@ -505,14 +501,15 @@ reset_output(){
     output_erri = 0;
 }
 
-// adjust vout
+
+// adjust vout to compensate for VH resistor drift
 static void
 calc_output(void){
 
     output_err   = s_vo.max - Q_VOLTS(GPI_OUTV);
     output_erri += output_err;
     output_adj   = (KOP * output_err + KOI * output_erri) >> 8;
-
+    // ...
 }
 
 /****************************************************************/
@@ -563,7 +560,7 @@ update_boost(void){
         if( vh > max ) vh = max;
     }else{
         // make sure we have enough
-        if( vh < output_vtarg + Q_VOLTS(4) ) vh = output_vtarg + Q_VOLTS(4);
+        if( vh < output_vtarg + Q_V_ELEVATOR ) vh = output_vtarg + Q_V_ELEVATOR;
         // avoid runaway at no load
         if( s_vh._curr > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }
@@ -587,15 +584,17 @@ update_boost_dc(void){
 
     int vi  = s_vi._curr;
 
-    int vht = output_vtarg + Q_VOLTS(12);
-    int vh  = s_vh._curr;
+    int vht = output_vtarg + 2 * Q_V_ELEVATOR;
+    int vh  = get_lpf_vh();
 
     input_err   = vht - get_lpf_vh();
+    if( !curr_cycle ) input_err = 0;	// too soon
+
     input_erri += input_err;
     int adj     = (28 * input_err + 2 * input_erri) >> 8;
-    input_adj   = (adj + prev_input_adj) >> 1;
+    input_adj   = adj;
 
-    //if( vh > Q_VOLTS(MAX_VH_SOFT) ) vht = 0;
+    // prevent runaway
     if( vh > vht + (vht>>2) ) vht = 0;
 
     if( vht ) vht += input_adj;
@@ -683,7 +682,7 @@ update_hbridge_dc(void){
     // smooth
     pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
 
-    // flip sign, so H1 is +, H2 is -
+    // flip sign, so H2 is +, H1 is -
     set_hbridge_pwm( - pwm_hbridge );
 
     prev_output_vtarg = output_vtarg;

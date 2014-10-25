@@ -45,7 +45,7 @@ pwmval(int v, int max){
     v >>= 16;
     if( (v < max-1) && (random() & 0xFFFF) <= d ) v ++;
     if( v > max-1 ) v = max-1;
-    if( v <-max+1 ) v = -max+1;
+    if( v < 0 ) v = 0;
     return v;
 }
 
@@ -58,16 +58,30 @@ set_boost_pwm(int v, int m){
     // skip check if we are turning it off (to avoid recursion)
     if( v && safety_check_boost() ) return;
 
-    if( m != mode_b ){
-        if( m == BOOST_UNSYNCH ){
+    if( v < 0 ) v = 0;
+
+    if( m == BOOST_UNSYNCH ){
+        if( m != mode_b ){
             // high-side gate off
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_50MHZ );
             gpio_clear( HW_GPIO_GATE_BOOST_H );
-            // PSC = divider - 1
-            // RSN - adjust freq based on temperature
-            // RSN - make sure we don't saturate
-            TIM8->PSC = 3;	// QQQ - quarter freq, to lower switching loss
-        }else{
+        }
+        // adjust freq - to avoid saturation + heat
+        // Tsat = Isat L / Vin
+        // pwmmax = Isat LuH F 64k / 1e6 / Vin
+        // run at slowest freq possible without saturating
+        // RSN - only if temp > x
+        int lim = ((GPI_LSAT * GPI_IND * BOOSTFREQ_LO) >> 4) / get_lpf_vi();
+        int div = v ? lim / v : 32;
+        if( div > 32 ) div = 32;	// QQQ - limit?
+        if( div < 1  ){
+            // saturates at highest freq - truncate
+            div = 1;
+            v   = lim;
+        }
+        TIM8->PSC = div - 1;
+    }else{
+        if( m != mode_b ){
             // enable high-side gate
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
             TIM8->PSC = 0;	// normal freq

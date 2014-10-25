@@ -179,9 +179,13 @@ int get_curr_vh(void){    return (sensor_data[0].val * 512270) >> 16; }		// meas
 int get_lpf_vh(void){     return (sensor_data[0].lpf * 512270) >> 16; }		// "
 int get_curr_vo(void){    return (sensor_data[1].val * 150678) >> 16; } 	// measured 20141015
 int get_lpf_vo(void){     return (sensor_data[1].lpf * 150678) >> 16; } 	// "
+#if 0
 int get_curr_vi(void){    return 192;    return sensor_data[2].val; }		// not hooked up
 int get_lpf_vi(void){     return 192;    return sensor_data[2].val; }		// not hooked up
-
+#else
+int get_curr_vi(void){    return (sensor_data[2].val * 150678) >> 16; } 	// estimated
+int get_lpf_vi(void){     return (sensor_data[2].lpf * 150678) >> 16; } 	// "
+#endif
 int get_curr_ii(void){    return ((sensor_data[3].val - offset_ii) * 100663) >> 14; }
 int get_lpf_ii(void){     return ((sensor_data[3].lpf - offset_ii) * 100663) >> 14; }
 int get_curr_io(void){    return ((sensor_data[4].val - offset_io) * 100663) >> 14; }
@@ -232,6 +236,7 @@ DEFUN(testsensors, "test sensors")
         }
 
         printf("\n");
+        if( check_button() ) return 0;
         sleep(1);
     }
 }
@@ -240,11 +245,23 @@ DEFUN(testpowersensors, "test power sensors")
 {
     while(1){
         read_sensors();
-        printf("vi %4d ii %4d\n", get_curr_vi(), get_curr_ii() );
-        printf("vo %4d io %4d\n", get_curr_vo(), get_curr_io() );
-        printf("vh %4d ic %4d\n", get_curr_vh(), get_curr_ic() );
+        printf("\e[J");
+        printf("vi %5d ii %4d\n", get_curr_vi(), get_curr_ii() );
+        printf("vo %5d io %4d\n", get_curr_vo(), get_curr_io() );
+        printf("vh %5d ic %4d\n", get_curr_vh(), get_curr_ic() );
         printf("\n");
-        usleep(10000);
+        if( check_button() ) return 0;
+        usleep(100000);
+    }
+}
+
+DEFUN(testvi, "test vin")
+{
+    while(1){
+        read_sensors();
+        printf("\e[J\e[17mVI %d\n", get_curr_vi());
+        if( check_button() ) return 0;
+        usleep(100000);
     }
 }
 
@@ -256,7 +273,8 @@ DEFUN(testtempsensors, "test temperature sensors")
         printf("%4d\n", get_curr_temp2());
         printf("%4d\n", get_curr_temp3());
         printf("\n");
-        usleep(10000);
+        if( check_button() ) return 0;
+        usleep(100000);
     }
 }
 
@@ -268,7 +286,8 @@ DEFUN(testctlsens, "test ctl board sensors")
         printf("%4d\n", get_curr_vi());
         printf("%4d\n", get_curr_temp1());
         printf("\n");
-        usleep(10000);
+        if( check_button() ) return 0;
+        usleep(100000);
     }
 }
 

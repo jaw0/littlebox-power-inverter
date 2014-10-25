@@ -1,9 +1,11 @@
 # ./mkmenu gpi.menu > menus.c
 
 Test Menu {
-    logging     => Logging {
-        enable          => logging("log/diag")
-        disable         => logging()
+    diag	=> Diag Menu {
+        sensors		=> testsensors
+        power           => testpowersensors
+        vin             => testvi
+        imu		=> testimu
     }
 
     profile     => Profile {
@@ -16,10 +18,10 @@ Test Menu {
         serial          => debser
     }
 
-#    diag	=> Diag Menu {
-#        sensors		=> testsensors
-#        imu		=> testimu
-#    }
+    logging     => Logging {
+        enable          => logging("log/diag")
+        disable         => logging()
+    }
     settings	=> Settings {
         volume          => volume
         battle short    => set_battle_short

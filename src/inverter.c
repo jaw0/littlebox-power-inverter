@@ -318,7 +318,7 @@ rotate_stats(void){
 
 static inline void
 add_stats(void){
-    short sign = (cycle_step >= HALFCYCLESTEPS) ? -1 : 0;
+    short sign = ( (cycle_step - VOPHASE + CYCLESTEPS) % CYCLESTEPS >= HALFCYCLESTEPS) ? -1 : 0;
 
     int io = get_curr_io();
     int ii = get_curr_ii();
@@ -416,13 +416,23 @@ est_req_ii(void){
     return 0;
 }
 
+
+// #define OLDCALC
+// old calc - dead flat ii, wobbly vh
+// new calc - dead flat vh, wobbly ii, converges to a lower ii
+// both take ~4 half-cycles
+
 // determine target input current
 static void
 calc_itarg(void){
 
     // calculate new target input current
     // previous ii +- vh move
+#ifdef OLDCALC
     int it  = curr_cycle ? s_ii.ave : 0;
+#else
+    int it = 0; // est_req_ii();
+#endif
 
     // try to stay centered
     int va = ((Q_VOLTS(MAX_VH_SOFT) - s_vh.max) + (Q_VOLTS(MIN_VH_SOFT) - s_vh.min)) >> 1;
@@ -442,11 +452,9 @@ calc_itarg(void){
         int va2 = Q_VOLTS(MIN_VH_SOFT) - s_vh.min;
         if( va2 > va ) va = va2;
         // if we clipped, increase current by the estimated clippage
-        it += it>>2;
+        it += it>>1;
     }
 
-
-    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d va %d, eri %d", s_pi.ave, s_po.ave, it, va, est_req_ii());
 
     // i = C dv f
 #if (GPI_CAP == 40) && (GPI_OUTHZ == 60)
@@ -459,7 +467,7 @@ calc_itarg(void){
     // kick - improves convergence
     if( (-va > (Q_VOLTS(MAX_VH_SOFT - MIN_VH_SOFT)>> 4) && s_vh.max >= Q_VOLTS(MAX_VH_SOFT) )
         || ( -itarg_err > (input_itarg>>4)) ){
-        // but too often (avoid any 120Hz spikes)
+        // but not too often (avoid any 120Hz spikes)
 
         if( curr_cycle - itarg_last_kick > 2 ){
             reset_boost();
@@ -469,7 +477,7 @@ calc_itarg(void){
 
     int errd;
 
-    if( curr_cycle > 1 ){
+    if( curr_cycle > 0 ){
         errd = itarg_err - prev_itarg_err;
         itarg_erri += itarg_err;
     }else{
@@ -477,9 +485,19 @@ calc_itarg(void){
         errd = 0;
         itarg_erri = 0;
     }
-
+#ifdef OLDCALC
     // PI control
     itarg_adj  = (KIP * itarg_err + KII * itarg_erri) >> 8;
+#else
+    //itarg_adj  = (50000 * itarg_err ) >> 8;
+    itarg_adj  = (1200 * itarg_err + 800 * itarg_erri + 450*errd) >> 8;
+    
+#endif
+
+    if( it + itarg_adj > Q_AMPS(4) ) itarg_adj = Q_AMPS(4) - it;
+
+    if( !(curr_cycle % 5) ) syslog("pi %d po %d it %d va %d, err %d adj %d", s_pi.ave, s_po.ave, it, va, itarg_err, itarg_adj);
+
 
     prev_input_itarg  = input_itarg;
     input_itarg       = it + itarg_adj;
@@ -533,6 +551,11 @@ update_boost(void){
 
     input_err   = itarg - get_lpf_ii();
     input_erri += input_err;
+
+    // minimize windup at start
+    if( s_vh.min < Q_VOLTS(GPI_OUTV) && input_adj < 0 )
+        input_erri = 0;
+
     input_adj   = (input_err + input_erri + prev_input_adj) >> 1;
 
     // this much current to the output
@@ -567,6 +590,8 @@ update_boost(void){
 
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
+
+
     // safety limit
     if( s_vh._curr > Q_VOLTS(MAX_VH_HARD) )
         pwm_boost = 0;
@@ -599,9 +624,6 @@ update_boost_dc(void){
 
     if( vht ) vht += input_adj;
     pwm_boost = (vht > vi) ? 65535 - 65535 * vi / vht : 0;
-
-    // RSN - if vht => control + smooth
-    // vh is smooth+clean, but low
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
 
@@ -639,13 +661,30 @@ update_hbridge(void){
     int vt  = vam * st;
     output_vtarg = vt >> 14;	// Q.4
 
+    int cap = (pvh - Q_V_ELEVATOR)<<14;
+    if( vt > cap )  vt = cap;
+    if( vt < -cap ) vt = -cap;
+
     // output
-    int pwm = (vt << 2) / pvh ;
+    int pwm = (vt << 2) / pvh;
+#if 1
+    // this helps with the zero-xing glitch, slightly
+    int xa = (half_cycle_step << 3) - 700;
+    xa = ABS(xa);
+    if( pwm >= 0 ){
+        pwm -= xa;
+        if( pwm < 0 ) pwm = 0;
+
+    }else{
+        pwm += xa;
+        if( pwm > 0 ) pwm = 0;
+    }
+#endif
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
     // smooth
-    pwm_hbridge = (pwm + 3 * pwm_hbridge) >> 2;
+    pwm_hbridge = pwm; // (pwm + 3 * pwm_hbridge) >> 2;
 
     set_hbridge_pwm( pwm_hbridge );
 
@@ -720,26 +759,25 @@ update_fans(void){
 
 /****************************************************************/
 
-void
+// stay safe. are we overloaded?
+int
 check_for_bad(void){
     char *soft=0, *hard=0;
     static utime_t fault_start = 0;
     static logged = 0;
 
-    // Vh too high?
-    // II, IO too high?
     if( get_lpf_vh() > Q_VOLTS(MAX_VH_SOFT) ) soft = "VH OVERLOAD";
     if( get_lpf_vh() > Q_VOLTS(MAX_VH_HARD) ) hard = "VH OVERLOAD";
-#if 0
-    if( pcy_vi_ave    > Q_VOLTS(MIN_VI_SOFT))  soft = "VI UNDERVOLT";
-    if( pcy_vi_ave    > Q_VOLTS(MIN_VI_HARD))  hard = "VI UNDERVOLT";
-    if( pcy_ii_ave    > Q_AMPS(MAX_II_SOFT) )  soft = "II OVERLOAD";
-    if( pcy_ii_ave    > Q_AMPS(MAX_II_HARD) )  hard = "II OVERLOAD";
-    if( pcy_io_ave    > Q_AMPS(MAX_IO_SOFT) )  soft = "IO OVERLOAD";
-    if( pcy_io_ave    > Q_AMPS(MAX_IO_HARD) )  hard = "IO OVERLOAD";
 
-    if( output_err > Q_VOLTS(MAX_OE_SOFT) )    soft = "OUT ERR";
-    if( output_err > Q_VOLTS(MAX_OE_HARD) )    hard = "OUT ERR";
+    if( s_vi.ave     < Q_VOLTS(MIN_VI_SOFT))  soft = "VI UNDERVOLT";
+    if( s_vi.ave     < Q_VOLTS(MIN_VI_HARD))  hard = "VI UNDERVOLT";
+    if( s_ii.ave     > Q_AMPS(MAX_II_SOFT) )  soft = "II OVERLOAD";
+    if( s_ii.ave     > Q_AMPS(MAX_II_HARD) )  hard = "II OVERLOAD";
+    if( s_io.ave     > Q_AMPS(MAX_IO_SOFT) )  soft = "IO OVERLOAD";
+    if( s_io.ave     > Q_AMPS(MAX_IO_HARD) )  hard = "IO OVERLOAD";
+#if 0
+    if( output_err > Q_VOLTS(MAX_OE_SOFT) )   soft = "OUT ERR";
+    if( output_err > Q_VOLTS(MAX_OE_HARD) )   hard = "OUT ERR";
 
     int mt = get_max_temp();
     if( mt > MAX_TEMP_SOFT ) soft = "TOO HOT";
@@ -766,6 +804,7 @@ check_for_bad(void){
             fault_reason = hard;
             if( !logged ) syslog("hard fault: %s [vh %d]", hard, get_lpf_vh());
             logged = 1;
+            return 1;
         }
 
     }else if( soft ){
@@ -773,6 +812,7 @@ check_for_bad(void){
     }else{
         set_led_red( 0 );
     }
+    return 0;
 }
 
 /****************************************************************/
@@ -1061,13 +1101,12 @@ DEFUN(profsine, "profile sine wave")
         read_sensors();
 
         update_stats();
-        //check_for_bad();
+        if( check_for_bad() ) break;
         update_boost();
         update_hbridge();
         output_k ++;
 
         if( !get_switch() ) break;
-        //if( fault_reason )  break;
 
         if( get_time() <= tend )
             diaglog(0);

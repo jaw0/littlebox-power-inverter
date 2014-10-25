@@ -9,8 +9,10 @@
 #ifndef __gpi_hw_h__
 #define __gpi_hw_h__
 
-// the big cap
+// the big cap+inductor at the front
 #define GPI_CAP		40	// uF
+#define GPI_IND		100	// uH
+#define GPI_LSAT	13	// amps - inductor saturation
 
 
 /* GPIO */

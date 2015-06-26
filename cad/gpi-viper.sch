@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.0.1">
+<eagle version="7.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -1191,6 +1191,7 @@ LOGO</text>
 <plain>
 <text x="15.24" y="68.58" size="1.778" layer="97">450V DC IN</text>
 <text x="66.04" y="35.56" size="1.778" layer="97">Vout = 3.3 * (R2+R3)/R3 + Vdiode</text>
+<text x="154.94" y="55.88" size="1.778" layer="97">12V out</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>

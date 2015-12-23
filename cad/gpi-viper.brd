@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.1.0">
+<eagle version="7.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -609,7 +609,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="NAME" x="31.272" y="0.456" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="31.554" y="4.628" size="1" layer="27" font="vector" ratio="10" rot="R270"/>
 </element>
-<element name="C4" library="jaw" package="SMD0603" value="1" x="47.6" y="9" smashed="yes" rot="R270">
+<element name="C4" library="jaw" package="SMD0603" value="1u" x="47.6" y="9" smashed="yes" rot="R270">
 <attribute name="NAME" x="46.822" y="6.016" size="1" layer="25" font="vector" ratio="10"/>
 <attribute name="VALUE" x="47.422" y="8.114" size="1" layer="27" font="vector" ratio="10"/>
 </element>

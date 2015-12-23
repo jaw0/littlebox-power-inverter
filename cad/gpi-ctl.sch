@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
@@ -4001,6 +4001,8 @@ Source: http://www.osram.convergy.de/</description>
 <wire x1="177.8" y1="78.74" x2="325.12" y2="78.74" width="0.508" layer="97"/>
 <wire x1="325.12" y1="78.74" x2="325.12" y2="86.36" width="0.508" layer="97"/>
 <text x="218.44" y="71.12" size="1.778" layer="97">USB/serial - diag + programming</text>
+<text x="330.2" y="25.4" size="2.54" layer="94" ratio="10">power inverter - control board
+little box challenge</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>

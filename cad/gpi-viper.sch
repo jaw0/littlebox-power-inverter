@@ -1167,7 +1167,7 @@ LOGO</text>
 <part name="C1" library="jaw" deviceset="C" device="0603" value=".1u"/>
 <part name="C2" library="jaw" deviceset="C" device="0603" value="10u"/>
 <part name="C3" library="jaw" deviceset="C" device="0603" value=".1u"/>
-<part name="C4" library="jaw" deviceset="C" device="0603" value="1"/>
+<part name="C4" library="jaw" deviceset="C" device="0603" value="1u"/>
 <part name="R1" library="jaw" deviceset="R" device="0603" value="3k9"/>
 <part name="R2" library="jaw" deviceset="R" device="0603" value="10k"/>
 <part name="R3" library="jaw" deviceset="R" device="0603" value="3k3"/>
@@ -1192,6 +1192,9 @@ LOGO</text>
 <text x="15.24" y="68.58" size="1.778" layer="97">450V DC IN</text>
 <text x="66.04" y="35.56" size="1.778" layer="97">Vout = 3.3 * (R2+R3)/R3 + Vdiode</text>
 <text x="154.94" y="55.88" size="1.778" layer="97">12V out</text>
+<text x="175.26" y="25.4" size="2.54" layer="94" ratio="10">power inverter - 12V board
+little box challenge</text>
+<text x="86.36" y="91.44" size="1.778" layer="97" ratio="10">voltage sense - to adc</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>

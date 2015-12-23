@@ -20,6 +20,7 @@
 #include "inverter.h"
 #include "gpiconf.h"
 
+// import pre-calculated sinwave table
 #if (CONTROLFREQ == 21000)
 #  if (GPI_OUTHZ == 50)
 #    include "sin50_350.h"
@@ -38,7 +39,7 @@
 DEFVAR(int, inv_state,    INV_STATE_OFF, UV_TYPE_UL, "inverter state")
 DEFVAR(int, battle_short, 0,             UV_TYPE_UL | UV_TYPE_CONFIG, "battle short - enable unsafe operation")
 // set false for testing, ...
-DEFVAR(int, runinverter, 1, UV_TYPE_UL | UV_TYPE_CONFIG, "run the inerter")
+DEFVAR(int, runinverter, 1, UV_TYPE_UL | UV_TYPE_CONFIG, "run the inverter")
 // enter diag mode at start?
 DEFVAR(int, diag_mode,    0,             UV_TYPE_UL | UV_TYPE_CONFIG, "diag mode: 0=off, 1=on, 2=never")
 
@@ -362,7 +363,7 @@ update_stats(void){
 
 }
 
-static void
+void
 update_stats_dc(void){
 
     if( !half_cycle_step || (half_cycle_step < curr_count) ){
@@ -583,7 +584,8 @@ update_boost(void){
         if( vh > max ) vh = max;
     }else{
         // make sure we have enough
-        if( vh < output_vtarg + Q_V_ELEVATOR ) vh = output_vtarg + Q_V_ELEVATOR;
+        int min = ABS(output_vtarg) + Q_V_ELEVATOR;
+        if( vh < min ) vh = min;
         // avoid runaway at no load
         if( s_vh._curr > Q_VOLTS(MAX_VH_SOFT) && !input_itarg ) vh = 0;
     }
@@ -591,12 +593,15 @@ update_boost(void){
     pwm_boost = (vh > vi) ? 65535 - 65535 * vi / vh : 0;
 
 
-
     // safety limit
     if( s_vh._curr > Q_VOLTS(MAX_VH_HARD) )
         pwm_boost = 0;
-
-    set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
+#if 0
+    if( pwm_boost && ((get_lpf_ii() * R_DCM)>>4) >= vi )
+        set_boost_pwm( pwm_boost, BOOST_SYNCH );
+    else
+#endif
+        set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
 
     prev_input_err = input_err;
     prev_input_adj = input_adj;
@@ -612,18 +617,18 @@ update_boost_dc(void){
     int vht = output_vtarg + 2 * Q_V_ELEVATOR;
     int vh  = get_lpf_vh();
 
-    input_err   = vht - get_lpf_vh();
+    input_err   = vht - vh;
     if( !curr_cycle ) input_err = 0;	// too soon
 
     input_erri += input_err;
-    int adj     = (28 * input_err + 2 * input_erri) >> 8;
-    input_adj   = adj;
+    input_adj   = (28 * input_err + 2 * input_erri) >> 8;
 
     // prevent runaway
     if( vh > vht + (vht>>2) ) vht = 0;
 
     if( vht ) vht += input_adj;
     pwm_boost = (vht > vi) ? 65535 - 65535 * vi / vht : 0;
+    if( pwm_boost > 64000 ) pwm_boost = 64000;
 
     set_boost_pwm( pwm_boost, BOOST_UNSYNCH );
 
@@ -683,9 +688,7 @@ update_hbridge(void){
     if( pwm >  0xFE00 ) pwm =  0xFE00;
     if( pwm < -0xFE00 ) pwm = -0xFE00;
 
-    // smooth
-    pwm_hbridge = pwm; // (pwm + 3 * pwm_hbridge) >> 2;
-
+    pwm_hbridge = pwm;
     set_hbridge_pwm( pwm_hbridge );
 
     // sync output
@@ -769,13 +772,14 @@ check_for_bad(void){
     if( get_lpf_vh() > Q_VOLTS(MAX_VH_SOFT) ) soft = "VH OVERLOAD";
     if( get_lpf_vh() > Q_VOLTS(MAX_VH_HARD) ) hard = "VH OVERLOAD";
 
-    if( s_vi.ave     < Q_VOLTS(MIN_VI_SOFT))  soft = "VI UNDERVOLT";
-    if( s_vi.ave     < Q_VOLTS(MIN_VI_HARD))  hard = "VI UNDERVOLT";
+#if 0
     if( s_ii.ave     > Q_AMPS(MAX_II_SOFT) )  soft = "II OVERLOAD";
     if( s_ii.ave     > Q_AMPS(MAX_II_HARD) )  hard = "II OVERLOAD";
     if( s_io.ave     > Q_AMPS(MAX_IO_SOFT) )  soft = "IO OVERLOAD";
     if( s_io.ave     > Q_AMPS(MAX_IO_HARD) )  hard = "IO OVERLOAD";
-#if 0
+
+    if( s_vi.ave     < Q_VOLTS(MIN_VI_SOFT))  soft = "VI UNDERVOLT";
+    if( s_vi.ave     < Q_VOLTS(MIN_VI_HARD))  hard = "VI UNDERVOLT";
     if( output_err > Q_VOLTS(MAX_OE_SOFT) )   soft = "OUT ERR";
     if( output_err > Q_VOLTS(MAX_OE_HARD) )   hard = "OUT ERR";
 
@@ -1069,6 +1073,7 @@ DEFUN(profhpwm, "profile hbridge pwm")
     return 0;
 }
 
+// run device in normal (AC output) mode with logging
 DEFUN(profsine, "profile sine wave")
 {
 
@@ -1133,7 +1138,8 @@ DEFUN(testdc, "generate DC output")
 
     int di = menu_get_str("Vout", ELEMENTSIN(_dc_voltage), _dc_voltage, 0);
     if( di == -1 ) return 0;
-    int vout = atoi( _dc_voltage[di] );
+    int vout  = atoi( _dc_voltage[di] );
+    int vtarg = Q_VOLTS( vout );
 
     currproc->flags |= PRF_REALTIME;
     currproc->prio = 0;
@@ -1144,28 +1150,39 @@ DEFUN(testdc, "generate DC output")
 
     printf("vout %d DC\n", vout);
     printf("flip switch on\n");
+    if( get_switch() ){
+        while( get_switch()  ) usleep( 100000 );
+        play(ivolume, "cc");
+    }
     while( !get_switch() ) usleep( 100000 );
     play(ivolume, "ab");
     set_led_green( 255 );
 
     utime_t tend = get_time() + 1000000;
+
     cycle_step = 0;
     reset_stats();
     reset_itarg();
     reset_output();
     reset_boost();
     reset_hbridge();
-    input_itarg = 0;
-    output_vtarg = Q_VOLTS( vout );
+    input_itarg  = 0;
+    output_vtarg = 0;
     output_k     = 0;
+
+    int step = 0;
 
     while(1){
 
         curr_t0 = get_hrtime();		// for logging
         read_sensors();
 
+        // ramp voltage
+        output_vtarg += 4;
+        if( output_vtarg > vtarg ) output_vtarg = vtarg;
+
         update_stats_dc();
-        //check_for_bad();
+        if( check_for_bad() ) break;
         update_boost_dc();
         update_hbridge_dc();
         output_k ++;

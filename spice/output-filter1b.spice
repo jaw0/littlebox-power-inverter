@@ -1,0 +1,54 @@
+gpi1 output filter
+
+* R @ 52k, 170k
+* 17V @ 300k
+* 
+* http://ngspice.sourceforge.net/docs/ngspice23-manual.pdf
+*
+* 1 3 5
+* 2 4 0
+*
+*
+*
+*  --+ 1 +--+--+ 3 +--+--
+*      L    |    L    |
+*           |         |
+*           C5        C6
+*           |         |
+*      L    |    L    |
+*  --+ 2 +--+--+ 4 +--+--
+*
+
+
+L1 1 3 10u
+
+L2 2 4 10u
+
+L3 3 5 10u
+
+L4 4 0 10u
+
+C5 3 4 .1u
+C6 5 0 .2u
+
+Rload 5 0 500
+Vin   1 2 AC 1000
+
+.AC DEC 1000 10k 10Meg
+* .AC DEC 100 1 100k
+
+.control
+run
+set color0=#fffff0
+set color1=black
+set color2=#C00000
+
+plot mag(V(5)) loglog
+* plot mag(V(5)) loglog xlimit 250k 650k
+* plot VP(5)
+
+*plot V(2,4) * I(Vin)
+
+.endc
+
+.end

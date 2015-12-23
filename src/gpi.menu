@@ -15,7 +15,9 @@ Test Menu {
 
     test        => Test {
         DC              => testdc
-        serial          => debser
+        H-Br            => testhbr
+        Boost           => testboost
+        Idle            => testidle
     }
 
     logging     => Logging {

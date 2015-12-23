@@ -98,11 +98,10 @@ struct cycle_dat {
     short vh_ave, vh_min, vh_max;
     short itarg;
     short iterr, itadj;
+    short vi_ave;
 };
 
 struct stats_dat {
-    short vi_ave, vo_ave;
-    short ii_ave, io_ave;
 };
 
 struct env_dat {
@@ -114,6 +113,7 @@ struct version_dat {
     // + calibration data
     u_short cell;
     u_short gyro;
+    char    name[16];
 };
 
 //****************************************************************
@@ -130,22 +130,6 @@ _unlock(void){
 
 //****************************************************************
 
-static void
-_write_version(FILE *f){
-    struct version_dat d;
-
-    fputc( MKTAG(LRT_VERSN, LRL_6B), f);
-
-    d.vers = LF_VERSION;
-#ifdef M5_471
-    d.cell = CELLWIDTH;
-#else
-    d.cell = 0;
-#endif
-    d.gyro = DEGREES2GYRO(1);
-    fwrite(f, (u_char*)&d, 6);
-}
-
 static int
 _version_is_ok(void){
     return (bbuf[0] == LF_VERSION) ? 1 : 0;
@@ -153,17 +137,19 @@ _version_is_ok(void){
 
 static void
 _log_version(void){
-    if( !ROOMFOR(7) ) return;
+    if( !ROOMFOR(2 + sizeof(struct version_dat)) ) return;
     _lock();
     u_char *lc = logmem + logpos;
-    lc[0] = MKTAG(LRT_VERSN, LRL_6B);
+    lc[0] = MKTAG(LRT_VERSN, LRL_VAR);
+    lc[1] =  sizeof(struct version_dat);
 
-    struct version_dat *d = (struct version_dat*)(lc + 1);
+    struct version_dat *d = (struct version_dat*)(lc + 2);
     d->vers = LF_VERSION;
     d->gyro = DEGREES2GYRO(1);
     d->cell = 0;
+    strncpy(d->name, ident, sizeof(d->name));
 
-    logpos += 7;
+    logpos += 2 + sizeof(struct version_dat);
     _unlock();
 }
 
@@ -198,36 +184,18 @@ _show_sensor(FILE *f){
 
 static void
 _log_stats(void){
-    if( !ROOMFOR(9) ) return;
-    _lock();
-    u_char *lc = logmem + logpos;
-    lc[0] = MKTAG(LRT_STATS, LRL_8B);
-
-    struct stats_dat *d = (struct stats_dat*)(lc + 1);
-    d->vi_ave = s_vi.ave;
-    d->ii_ave = s_ii.ave;	// XXX (dupe)
-    d->vo_ave = 0;		// XXX
-    d->io_ave = s_io.ave;
-
-    logpos += 9;
-    _unlock();
 }
 
 static inline void
 _show_stats(FILE *f){
-    struct stats_dat *p = (struct stats_dat*)bbuf;
-
-    fprintf(f, "stats\tvi=%d vo=%d ii=%d io=%d",
-            p->vi_ave, p->vo_ave, p->ii_ave, p->io_ave
-    );
 }
 
 _log_cycle(void){
-    if( !ROOMFOR(20) ) return;
+    if( !ROOMFOR(22) ) return;
     _lock();
     u_char *lc = logmem + logpos;
     lc[0] = MKTAG(LRT_CYCLE, LRL_VAR);
-    lc[1] = 18;
+    lc[1] = 20;
 
     struct cycle_dat *d = (struct cycle_dat*)(lc + 2);
     d->ii_ave = s_ii.ave;
@@ -239,8 +207,9 @@ _log_cycle(void){
     d->itarg  = input_itarg;
     d->iterr  = itarg_err;
     d->itadj  = (int)itarg_adj >> 1;
+    d->vi_ave = s_vi.ave;
 
-    logpos += 20;
+    logpos += 22;
     _unlock();
 }
 
@@ -248,8 +217,8 @@ static inline void
 _show_cycle(FILE *f){
     struct cycle_dat *p = (struct cycle_dat*)bbuf;
 
-    fprintf(f, "cycle\tit=%d ii=%d/%d/%d vh=%d/%d/%d",
-            p->itarg,
+    fprintf(f, "cycle\tit=%d vi=%d ii=%d/%d/%d vh=%d/%d/%d",
+            p->itarg,  p->vi_ave,
             p->ii_min, p->ii_ave, p->ii_max,
             p->vh_min, p->vh_ave, p->vh_max
     );
@@ -538,12 +507,14 @@ diaglog(int tag){
     }
 
     if( logmode == LOGMO_LORES ){
-        if( !(logstep++ % 21000) ){
+        if( !hcs ){
             _log_stamp();
             _log_cycle();
             _log_stats();
-            _log_env();
+            if( !(logstep % 120) ) _log_env();
+            logstep ++;
         }
+        _log_slow();
         return;
     }
 
@@ -551,8 +522,8 @@ diaglog(int tag){
         _log_tag(tag);
         _log_sensor();
         _log_control();
-        if( !(logstep % 35) )  _log_env();
-        if( !hcs )             _log_cycle();
+        if( !hcs )  _log_cycle();
+        if( !hcs )  _log_env();
         _log_slow();
         logstep ++;
         return;
@@ -939,5 +910,40 @@ DEFUN(syslog, "log message")
 {
     if( argc < 2 ) return 0;
     syslog("%s", argv[1]);
+    return 0;
+}
+
+DEFUN(testlog, "test diag log")
+{
+
+    diaglog_open( "log/test.log");
+    diaglog_testres();
+    inv_state = INV_STATE_TEST;
+
+    // while( !get_switch() ) usleep( 100000 );
+
+    utime_t tend = get_hrtime() + 10000000;
+
+    while(1){
+        curr_t0 = get_hrtime();		// for logging
+        read_sensors();
+        update_stats_dc();
+
+        // if( !get_switch() )   break;
+
+        if( get_time() <= tend )
+            diaglog(0);
+        else
+            break;
+
+        // usleep(1000);
+        tsleep( TIM7, -1, "timer", 1000);
+
+    }
+
+    diaglog_close();
+    play(ivolume, "ba");
+    inv_state = INV_STATE_OFF;
+
     return 0;
 }

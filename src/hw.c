@@ -47,12 +47,6 @@ DEFUN(save_all, "save all config data")
     return 0;
 }
 
-unsigned int
-random(void){
-    return rng_get();
-}
-
-
 /****************************************************************/
 void
 update_pwm_freq(void){

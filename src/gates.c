@@ -25,7 +25,7 @@
 #define HBRFREQ_HI	350000
 #define BOOSTFREQ_LO	300000
 #define BOOSTFREQ_HI	350000
-#define DEADTIME	30	// ns.  ~ Toff + Tfall - Ton
+#define DEADTIME	30	//30 ns.  ~ Toff + Tfall - Ton
 
 #define HBRFREQ_VMIN	(APB2CLOCK / HBRFREQ_HI)
 #define HBRFREQ_VMAX	(APB2CLOCK / HBRFREQ_LO)
@@ -63,9 +63,10 @@ set_boost_pwm(int v, int m){
     if( m == BOOST_UNSYNCH ){
         if( m != mode_b ){
             // high-side gate off
-            gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_50MHZ );
+            gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_25MHZ );
             gpio_clear( HW_GPIO_GATE_BOOST_H );
         }
+#if 0
         // adjust freq - to avoid saturation + heat
         // Tsat = Isat L / Vin
         // pwmmax = Isat LuH F 64k / 1e6 / Vin
@@ -80,10 +81,11 @@ set_boost_pwm(int v, int m){
             v   = lim;
         }
         TIM8->PSC = div - 1;
+#endif
     }else{
         if( m != mode_b ){
             // enable high-side gate
-            gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
+            gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_25MHZ );
             TIM8->PSC = 0;	// normal freq
         }
     }
@@ -192,7 +194,6 @@ _init_timer(TIM_TypeDef *t){
 
     // no prescalers up to ~372 ns
     int dtg = (DEADTIME * (APB2CLOCK / 1000000) + 999) / 1000;	// ceil( DT * APB2 / 1e9 )
-
     t->BDTR &= 0xFF;
     t->BDTR |= 1<<11;	// OSSR - does not seem to help
     t->BDTR |= dtg;
@@ -205,14 +206,14 @@ init_gates(void){
     bootmsg(" gates");
 
     //gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
-    gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_50MHZ );
+    gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_25MHZ );
     gpio_clear(HW_GPIO_GATE_BOOST_H);
 
-    gpio_init( HW_GPIO_GATE_BOOST_L,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
-    gpio_init( HW_GPIO_GATE_HBRIDGE_L_H, GPIO_AF(1) | GPIO_SPEED_50MHZ );
-    gpio_init( HW_GPIO_GATE_HBRIDGE_L_L, GPIO_AF(1) | GPIO_SPEED_50MHZ );
-    gpio_init( HW_GPIO_GATE_HBRIDGE_R_H, GPIO_AF(1) | GPIO_SPEED_50MHZ );
-    gpio_init( HW_GPIO_GATE_HBRIDGE_R_L, GPIO_AF(1) | GPIO_SPEED_50MHZ );
+    gpio_init( HW_GPIO_GATE_BOOST_L,     GPIO_AF(3) | GPIO_SPEED_25MHZ );
+    gpio_init( HW_GPIO_GATE_HBRIDGE_L_H, GPIO_AF(1) | GPIO_SPEED_25MHZ );
+    gpio_init( HW_GPIO_GATE_HBRIDGE_L_L, GPIO_AF(1) | GPIO_SPEED_25MHZ );
+    gpio_init( HW_GPIO_GATE_HBRIDGE_R_H, GPIO_AF(1) | GPIO_SPEED_25MHZ );
+    gpio_init( HW_GPIO_GATE_HBRIDGE_R_L, GPIO_AF(1) | GPIO_SPEED_25MHZ );
 
     _init_timer( TIM1 );
     _init_timer( TIM8 );
@@ -249,37 +250,139 @@ DEFUN(testgates, "test gates")
 
 DEFUN(testhbr, "test hbridge")
 {
-    int i;
+    int i=0, d=1;
 
-    for(i=0; i<10; i++){
-        set_hbridge_pwm(8192);
-        sleep(1);
-        set_hbridge_pwm(-8192);
-        sleep(1);
+    diaglog_open( "log/hbr.log");
+    diaglog_testres();
+    inv_state = INV_STATE_TEST;
+
+    printf("flip switch on\n");
+    while( !get_switch() ) usleep( 100000 );
+    play(ivolume, "ab");
+    set_led_green( 255 );
+
+    utime_t tend = get_time() + 2000000;
+
+    while(1){
+        curr_t0 = get_hrtime();		// for logging
+        read_sensors();
+        update_stats_dc();
+        set_hbridge_pwm(pwm_hbridge = i);
+
+        i += d * 256;
+
+        if( d==1 && i>=64000 ){
+            d = -1;
+        }
+        else if( d==-1 && i<=-64000 ){
+            d = 1;
+        }
+
+        if( !get_switch() )   break;
+        if( check_for_bad() ) break;
+
+        if( get_time() <= tend )
+            diaglog(0);
+
+        usleep(1000);
     }
 
-    set_hbridge_pwm(0);
+    set_gates_safe();
+    diaglog_close();
+    play(ivolume, "ba");
+    set_led_green( 0 );
+    inv_state = INV_STATE_OFF;
+
     return 0;
 }
 
 DEFUN(testboost, "test boost")
 {
-    int i;
+    int i=0, d=1;
 
-    set_hbridge_pwm(65535);
-    set_boost_pwm(50000, BOOST_UNSYNCH);
-    for(i=0; i<10; i++){
+    diaglog_open( "log/boo.log");
+    diaglog_testres();
+    inv_state = INV_STATE_TEST;
+
+    printf("flip switch on\n");
+    while( !get_switch() ) usleep( 100000 );
+    play(ivolume, "ab");
+    set_led_green( 255 );
+
+    utime_t tend = get_time() + 5000000;
+
+    set_hbridge_pwm(pwm_hbridge = -60000);
+
+    while(1){
+        curr_t0 = get_hrtime();		// for logging
         read_sensors();
-        printf("vi %4d ii %4d\n", get_curr_vi(), get_curr_ii() );
-        printf("vo %4d io %4d\n", get_curr_vo(), get_curr_io() );
-        printf("vh %4d ic %4d\n", get_curr_vh(), get_curr_ic() );
-        printf("\n");
+        update_stats_dc();
 
-        usleep(500000);
+        if( !get_switch() )   break;
+        if( get_lpf_vh() > Q_VOLTS(MAX_VH_SOFT) ) break;
+
+        set_boost_pwm(pwm_boost = i * 64, BOOST_UNSYNCH);
+
+        i += d;
+
+        if( d==1 && i>=768 ){
+            d = -1;
+        }
+        else if( d==-1 && i<=0 ){
+            d = 1;
+        }
+
+        if( get_time() <= tend )
+            diaglog(0);
+
+        usleep(1000);
     }
 
-    set_boost_pwm(0, BOOST_UNSYNCH);
-    set_hbridge_pwm(0);
+    set_gates_safe();
+    diaglog_close();
+    play(ivolume, "ba");
+    set_led_green( 0 );
+    inv_state = INV_STATE_OFF;
+
+    printf("\e[17mvh %d\n", get_lpf_vh());
+    sleep(2);
+
+    return 0;
+}
+
+DEFUN(testidle, "test idle")
+{
+    int i=0, d=1;
+
+    diaglog_open( "log/idle.log");
+    diaglog_testres();
+    inv_state = INV_STATE_TEST;
+
+    printf("flip switch on\n");
+    while( !get_switch() ) usleep( 100000 );
+    play(ivolume, "ab");
+    set_led_green( 255 );
+
+    pwm_boost = pwm_hbridge = 0;
+    utime_t tend = get_time() + 2000000;
+
+    while(1){
+        curr_t0 = get_hrtime();		// for logging
+        read_sensors();
+        update_stats_dc();
+
+        if( !get_switch() )   break;
+
+        if( get_time() <= tend )
+            diaglog(0);
+
+        usleep(1000);
+    }
+
+    diaglog_close();
+    play(ivolume, "ba");
+    set_led_green( 0 );
+    inv_state = INV_STATE_OFF;
 
     return 0;
 }

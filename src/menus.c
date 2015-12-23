@@ -35,7 +35,9 @@ const struct Menu menu_aaab = {
 const struct Menu menu_aaac = {
     "Test", &guitop, 0, {
 	{ "DC", MTYP_FUNC, (void*)ui_f_testdc, sizeof(argv_empty)/4, argv_empty },
-	{ "serial", MTYP_FUNC, (void*)ui_f_debser, sizeof(argv_empty)/4, argv_empty },
+	{ "H-Br", MTYP_FUNC, (void*)ui_f_testhbr, sizeof(argv_empty)/4, argv_empty },
+	{ "Boost", MTYP_FUNC, (void*)ui_f_testboost, sizeof(argv_empty)/4, argv_empty },
+	{ "Idle", MTYP_FUNC, (void*)ui_f_testidle, sizeof(argv_empty)/4, argv_empty },
 	{}
     }
 };

@@ -15,8 +15,8 @@
 #define Q_AMPS(x)	((x) << AMPSHIFT)
 
 
-#define VDIODE		1	// generically
-#define Q_V_DIODEOUT	18	// output voltage drop
+#define VOPHASE		3	// there is a rc lpf on the adc
+#define Q_V_DIODEOUT	18	// and a pair of diodes
 #define Q_V_ELEVATOR	100	// VH must be at least this much more than VO
 
 
@@ -43,12 +43,17 @@
 #define	GPI_OUTHZ	60
 #define	GPI_OUTV	48
 
-#define MAX_VH_HARD	100
-#define MAX_VH_SOFT	90
-#define MIN_VH_SOFT	60
-#define MIN_VH_HARD	50
+#define MAX_VH_HARD	150
+#define MAX_VH_SOFT	100
+#define MIN_VH_SOFT	50
+#define MIN_VH_HARD	48
 
-#define MIN_VI_SOFT	6
+#define MIN_VI_SOFT	150
+#define MIN_VI_HARD	120
+#define MAX_II_SOFT	  4
+#define MAX_II_HARD	  5
+#define MAX_IO_SOFT	  4
+#define MAX_IO_HARD	  5
 
 #define STOP_HARD_VH	200
 

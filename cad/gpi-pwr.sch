@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.2.0">
+<eagle version="7.5.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -735,32 +735,6 @@ DOWN</text>
 <text x="-6.35" y="-2.54" size="1.5" layer="21" ratio="10" rot="R90">FACE
 DOWN</text>
 </package>
-<package name="SOT-23-5">
-<wire x1="1.522" y1="0.81" x2="1.522" y2="-0.81" width="0.1524" layer="21"/>
-<wire x1="1.522" y1="-0.81" x2="-1.522" y2="-0.81" width="0.1524" layer="51"/>
-<wire x1="-1.522" y1="-0.81" x2="-1.522" y2="0.81" width="0.1524" layer="21"/>
-<wire x1="-1.522" y1="0.81" x2="1.522" y2="0.81" width="0.1524" layer="51"/>
-<wire x1="-0.522" y1="0.81" x2="0.522" y2="0.81" width="0.1524" layer="21"/>
-<wire x1="-0.428" y1="-0.81" x2="-0.522" y2="-0.81" width="0.1524" layer="21"/>
-<wire x1="0.522" y1="-0.81" x2="0.428" y2="-0.81" width="0.1524" layer="21"/>
-<wire x1="-1.328" y1="-0.81" x2="-1.522" y2="-0.81" width="0.1524" layer="21"/>
-<wire x1="1.522" y1="-0.81" x2="1.328" y2="-0.81" width="0.1524" layer="21"/>
-<wire x1="1.328" y1="0.81" x2="1.522" y2="0.81" width="0.1524" layer="21"/>
-<wire x1="-1.522" y1="0.81" x2="-1.328" y2="0.81" width="0.1524" layer="21"/>
-<smd name="1" x="-0.95" y="-1.3" dx="0.55" dy="1.2" layer="1"/>
-<smd name="2" x="0" y="-1.3" dx="0.55" dy="1.2" layer="1"/>
-<smd name="3" x="0.95" y="-1.3" dx="0.55" dy="1.2" layer="1"/>
-<smd name="4" x="0.95" y="1.3" dx="0.55" dy="1.2" layer="1"/>
-<smd name="5" x="-0.95" y="1.3" dx="0.55" dy="1.2" layer="1"/>
-<text x="-1.5875" y="2.2225" size="1.27" layer="25" font="vector" ratio="10">&gt;NAME</text>
-<text x="-1.905" y="-3.429" size="1.27" layer="27" font="vector" ratio="10">&gt;VALUE</text>
-<rectangle x1="-1.2" y1="-1.5" x2="-0.7" y2="-0.85" layer="51"/>
-<rectangle x1="-0.25" y1="-1.5" x2="0.25" y2="-0.85" layer="51"/>
-<rectangle x1="0.7" y1="-1.5" x2="1.2" y2="-0.85" layer="51"/>
-<rectangle x1="0.7" y1="0.85" x2="1.2" y2="1.5" layer="51"/>
-<rectangle x1="-1.2" y1="0.85" x2="-0.7" y2="1.5" layer="51"/>
-<circle x="-1" y="-0.3" radius="0.2" width="0.127" layer="21"/>
-</package>
 <package name="SHORT">
 <smd name="P$1" x="-0.2" y="0" dx="0.5" dy="0.5" layer="1" stop="no" cream="no"/>
 <smd name="P$2" x="0.2" y="0" dx="0.5" dy="0.5" layer="1" stop="no" cream="no"/>
@@ -967,20 +941,6 @@ LOGO</text>
 <pin name="P$6" x="5.08" y="0" visible="pad" length="short" direction="pas" function="dot" rot="R180"/>
 <pin name="P$7" x="-2.54" y="-2.54" visible="pad" length="short" direction="pas" function="dot"/>
 <pin name="P$8" x="5.08" y="-2.54" visible="pad" length="short" direction="pas" function="dot" rot="R180"/>
-</symbol>
-<symbol name="OPAMP">
-<pin name="INP" x="-12.7" y="2.54" visible="off" length="middle"/>
-<pin name="INM" x="-12.7" y="-2.54" visible="off" length="middle"/>
-<pin name="OUT" x="12.7" y="0" visible="off" length="middle" rot="R180"/>
-<pin name="V" x="0" y="10.16" length="middle" rot="R270"/>
-<pin name="G" x="0" y="-10.16" length="middle" rot="R90"/>
-<wire x1="-7.62" y1="7.62" x2="-7.62" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-7.62" x2="7.62" y2="0" width="0.254" layer="94"/>
-<wire x1="7.62" y1="0" x2="-7.62" y2="7.62" width="0.254" layer="94"/>
-<text x="-5.08" y="2.54" size="2.54" layer="94" ratio="10">+</text>
-<text x="-5.08" y="-5.08" size="2.54" layer="94" ratio="10">-</text>
-<text x="5.08" y="7.62" size="2.54" layer="95" ratio="10">&gt;NAME</text>
-<text x="5.08" y="-7.62" size="2.54" layer="96" ratio="10">&gt;VALUE</text>
 </symbol>
 <symbol name="PWR-GNDM">
 <pin name="GNDM" x="0" y="2.54" visible="off" length="short" direction="sup" rot="R270"/>
@@ -1512,25 +1472,6 @@ LOGO</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="OPAMP" prefix="U">
-<gates>
-<gate name="G$1" symbol="OPAMP" x="2.54" y="0"/>
-</gates>
-<devices>
-<device name="" package="SOT-23-5">
-<connects>
-<connect gate="G$1" pin="G" pad="2"/>
-<connect gate="G$1" pin="INM" pad="4"/>
-<connect gate="G$1" pin="INP" pad="3"/>
-<connect gate="G$1" pin="OUT" pad="1"/>
-<connect gate="G$1" pin="V" pad="5"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="PWR-GNDM" prefix="GNDM">
 <gates>
 <gate name="G$1" symbol="PWR-GNDM" x="0" y="0"/>
@@ -1691,12 +1632,12 @@ With round pins</description>
 <part name="C2" library="jaw" deviceset="C" device="MKP1848S62010JY5F" value="20u"/>
 <part name="C3" library="jaw" deviceset="C" device="2220" value=".1u"/>
 <part name="R1" library="jaw" deviceset="R" device="2512" value="2M 2kV"/>
-<part name="Q1" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
-<part name="Q3" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
-<part name="Q5" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
-<part name="Q6" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
-<part name="Q7" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
-<part name="Q8" library="jaw" deviceset="MOSFET" device="TO247REV" value="MOSFETTO247REV"/>
+<part name="Q1" library="jaw" deviceset="MOSFET" device="TO247REV" value="C2M0160120D"/>
+<part name="Q3" library="jaw" deviceset="MOSFET" device="TO247REV" value="C2M0160120D"/>
+<part name="Q5" library="jaw" deviceset="MOSFET" device="TO247REV" value="C2M0160120D"/>
+<part name="Q6" library="jaw" deviceset="MOSFET" device="TO247REV" value="C2M0160120D"/>
+<part name="Q7" library="jaw" deviceset="MOSFET" device="TO247REV" value="C2M0160120D"/>
+<part name="Q8" library="jaw" deviceset="MOSFET" device="TO247REV" value="C2M0160120D"/>
 <part name="R5" library="jaw" deviceset="R" device="0603" value="3k3"/>
 <part name="R10" library="jaw" deviceset="R" device="0603" value="3k3"/>
 <part name="R12" library="jaw" deviceset="R" device="1206" value="592k"/>
@@ -1795,14 +1736,6 @@ With round pins</description>
 <part name="D9" library="jaw" deviceset="DIODE" device="SOD-323"/>
 <part name="D10" library="jaw" deviceset="DIODE" device="SOD-323"/>
 <part name="D11" library="jaw" deviceset="DIODE" device="SOD-323"/>
-<part name="R27" library="jaw" deviceset="R" device="0603" value="22"/>
-<part name="VCC7" library="jaw" deviceset="PWR-VCC" device=""/>
-<part name="C27" library="jaw" deviceset="C" device="0603" value=".1u"/>
-<part name="C28" library="jaw" deviceset="C" device="0603" value=".1u"/>
-<part name="U11" library="jaw" deviceset="OPAMP" device="" value="MAX4452"/>
-<part name="U12" library="jaw" deviceset="OPAMP" device="" value="MAX4452"/>
-<part name="R26" library="jaw" deviceset="R" device="0603" value="22"/>
-<part name="VCC8" library="jaw" deviceset="PWR-VCC" device=""/>
 <part name="GNDM2" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM3" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM7" library="jaw" deviceset="PWR-GNDM" device=""/>
@@ -1815,10 +1748,7 @@ With round pins</description>
 <part name="GNDM13" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM14" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM15" library="jaw" deviceset="PWR-GNDM" device=""/>
-<part name="GNDM16" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM17" library="jaw" deviceset="PWR-GNDM" device=""/>
-<part name="GNDM18" library="jaw" deviceset="PWR-GNDM" device=""/>
-<part name="GNDM19" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM20" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM21" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM22" library="jaw" deviceset="PWR-GNDM" device=""/>
@@ -1837,13 +1767,14 @@ With round pins</description>
 <part name="Z2" library="jaw" deviceset="SHORT" device=""/>
 <part name="Z3" library="jaw" deviceset="SHORT" device=""/>
 <part name="C6" library="jaw-brd" deviceset="FILTER" device=""/>
+<part name="GND10" library="jaw" deviceset="PWR-GND" device=""/>
 </parts>
 <sheets>
 <sheet>
 <plain>
 <text x="124.46" y="152.4" size="1.27" layer="97">PIV&gt;1kV</text>
 <text x="7.62" y="88.9" size="1.778" layer="97">DC IN</text>
-<text x="7.62" y="63.5" size="1.778" layer="97">to 12V buck board</text>
+<text x="5.08" y="63.5" size="1.778" layer="97">HVDC to 12V buck board</text>
 <text x="383.54" y="91.44" size="1.778" layer="97">to chassis</text>
 <text x="139.7" y="236.22" size="1.778" layer="97">sensor: attached, or wired to cover</text>
 <text x="66.04" y="40.64" size="1.778" layer="97">synchronous boost converter</text>
@@ -1859,7 +1790,7 @@ little box challenge</text>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
 <instance part="FRAME1" gate="G$2" x="325.12" y="0"/>
-<instance part="L1" gate="G$1" x="60.96" y="96.52"/>
+<instance part="L1" gate="G$1" x="63.5" y="96.52"/>
 <instance part="C1" gate="G$1" x="45.72" y="86.36"/>
 <instance part="C2" gate="G$1" x="116.84" y="86.36"/>
 <instance part="C3" gate="G$1" x="127" y="86.36"/>
@@ -1968,14 +1899,6 @@ little box challenge</text>
 <instance part="D9" gate="G$1" x="210.82" y="121.92" rot="R90"/>
 <instance part="D10" gate="G$1" x="220.98" y="121.92" rot="R90"/>
 <instance part="D11" gate="G$1" x="261.62" y="121.92" rot="R90"/>
-<instance part="R27" gate="G$1" x="317.5" y="193.04"/>
-<instance part="VCC7" gate="G$1" x="304.8" y="223.52"/>
-<instance part="C27" gate="G$1" x="325.12" y="241.3"/>
-<instance part="C28" gate="G$1" x="332.74" y="241.3"/>
-<instance part="U11" gate="G$1" x="304.8" y="210.82"/>
-<instance part="U12" gate="G$1" x="304.8" y="167.64"/>
-<instance part="R26" gate="G$1" x="314.96" y="147.32"/>
-<instance part="VCC8" gate="G$1" x="304.8" y="180.34"/>
 <instance part="GNDM2" gate="G$1" x="345.44" y="210.82"/>
 <instance part="GNDM3" gate="G$1" x="284.48" y="233.68"/>
 <instance part="GNDM7" gate="G$1" x="71.12" y="187.96"/>
@@ -1988,17 +1911,14 @@ little box challenge</text>
 <instance part="GNDM13" gate="G$1" x="144.78" y="63.5"/>
 <instance part="GNDM14" gate="G$1" x="154.94" y="205.74"/>
 <instance part="GNDM15" gate="G$1" x="203.2" y="205.74"/>
-<instance part="GNDM16" gate="G$1" x="327.66" y="83.82"/>
 <instance part="GNDM17" gate="G$1" x="396.24" y="129.54"/>
-<instance part="GNDM18" gate="G$1" x="304.8" y="154.94"/>
-<instance part="GNDM19" gate="G$1" x="304.8" y="198.12"/>
 <instance part="GNDM20" gate="G$1" x="345.44" y="193.04"/>
 <instance part="GNDM21" gate="G$1" x="345.44" y="177.8"/>
 <instance part="GNDM22" gate="G$1" x="403.86" y="177.8"/>
 <instance part="GNDM23" gate="G$1" x="403.86" y="193.04"/>
 <instance part="GNDM24" gate="G$1" x="304.8" y="233.68"/>
-<instance part="C29" gate="G$1" x="340.36" y="241.3"/>
-<instance part="C30" gate="G$1" x="347.98" y="241.3"/>
+<instance part="C29" gate="G$1" x="325.12" y="241.3"/>
+<instance part="C30" gate="G$1" x="332.74" y="241.3"/>
 <instance part="CN4" gate="G$1" x="182.88" y="218.44"/>
 <instance part="R28" gate="G$1" x="320.04" y="86.36" rot="R90"/>
 <instance part="GND3" gate="G$1" x="83.82" y="132.08"/>
@@ -2010,6 +1930,7 @@ little box challenge</text>
 <instance part="Z2" gate="G$1" x="170.18" y="53.34"/>
 <instance part="Z3" gate="G$1" x="170.18" y="60.96"/>
 <instance part="C6" gate="G$1" x="297.18" y="86.36"/>
+<instance part="GND10" gate="G$1" x="327.66" y="83.82"/>
 </instances>
 <busses>
 </busses>
@@ -2106,6 +2027,11 @@ little box challenge</text>
 <wire x1="165.1" y1="53.34" x2="165.1" y2="60.96" width="0.1524" layer="91"/>
 <junction x="165.1" y="53.34"/>
 </segment>
+<segment>
+<pinref part="R10" gate="G$1" pin="P$2"/>
+<wire x1="330.2" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
+<pinref part="GND10" gate="G$1" pin="GND"/>
+</segment>
 </net>
 <net name="N$1" class="0">
 <segment>
@@ -2119,7 +2045,7 @@ little box challenge</text>
 <segment>
 <pinref part="L1" gate="G$1" pin="P$2"/>
 <pinref part="Q1" gate="G$1" pin="D"/>
-<wire x1="86.36" y1="96.52" x2="68.58" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="86.36" y1="96.52" x2="71.12" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="86.36" y1="88.9" x2="86.36" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="Q3" gate="G$1" pin="S"/>
 <wire x1="86.36" y1="96.52" x2="91.44" y2="96.52" width="0.1524" layer="91"/>
@@ -2179,13 +2105,13 @@ little box challenge</text>
 <label x="388.62" y="203.2" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="317.5" y1="210.82" x2="322.58" y2="210.82" width="0.1524" layer="91"/>
-<pinref part="R27" gate="G$1" pin="P$2"/>
-<wire x1="322.58" y1="210.82" x2="330.2" y2="210.82" width="0.1524" layer="91"/>
-<wire x1="322.58" y1="193.04" x2="322.58" y2="210.82" width="0.1524" layer="91"/>
-<junction x="322.58" y="210.82"/>
-<label x="330.2" y="210.82" size="1.778" layer="95"/>
-<pinref part="U11" gate="G$1" pin="OUT"/>
+<pinref part="R1" gate="G$1" pin="P$1"/>
+<pinref part="R5" gate="G$1" pin="P$2"/>
+<wire x1="144.78" y1="86.36" x2="144.78" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="83.82" x2="144.78" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="83.82" x2="149.86" y2="83.82" width="0.1524" layer="91"/>
+<junction x="144.78" y="83.82"/>
+<label x="149.86" y="83.82" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$24" class="0">
@@ -2344,26 +2270,12 @@ little box challenge</text>
 <pinref part="C25" gate="G$1" pin="P$1"/>
 <wire x1="309.88" y1="246.38" x2="317.5" y2="246.38" width="0.1524" layer="91"/>
 <junction x="309.88" y="246.38"/>
-<pinref part="C27" gate="G$1" pin="P$1"/>
 <wire x1="325.12" y1="246.38" x2="317.5" y2="246.38" width="0.1524" layer="91"/>
 <junction x="317.5" y="246.38"/>
-<pinref part="C28" gate="G$1" pin="P$1"/>
+<pinref part="C29" gate="G$1" pin="P$1"/>
+<pinref part="C30" gate="G$1" pin="P$1"/>
 <wire x1="332.74" y1="246.38" x2="325.12" y2="246.38" width="0.1524" layer="91"/>
 <junction x="325.12" y="246.38"/>
-<pinref part="C29" gate="G$1" pin="P$1"/>
-<wire x1="340.36" y1="246.38" x2="332.74" y2="246.38" width="0.1524" layer="91"/>
-<junction x="332.74" y="246.38"/>
-<pinref part="C30" gate="G$1" pin="P$1"/>
-<wire x1="347.98" y1="246.38" x2="340.36" y2="246.38" width="0.1524" layer="91"/>
-<junction x="340.36" y="246.38"/>
-</segment>
-<segment>
-<pinref part="U11" gate="G$1" pin="V"/>
-<pinref part="VCC7" gate="G$1" pin="VCC"/>
-</segment>
-<segment>
-<pinref part="U12" gate="G$1" pin="V"/>
-<pinref part="VCC8" gate="G$1" pin="VCC"/>
 </segment>
 </net>
 <net name="N$14" class="0">
@@ -2808,7 +2720,7 @@ little box challenge</text>
 <wire x1="35.56" y1="101.6" x2="35.56" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="L1" gate="G$1" pin="P$1"/>
 <wire x1="48.26" y1="96.52" x2="50.8" y2="96.52" width="0.1524" layer="91"/>
-<wire x1="50.8" y1="96.52" x2="53.34" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="96.52" x2="55.88" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="96.52" x2="40.64" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="C1" gate="G$1" pin="P$1"/>
 <wire x1="40.64" y1="96.52" x2="45.72" y2="96.52" width="0.1524" layer="91"/>
@@ -2908,52 +2820,11 @@ little box challenge</text>
 <junction x="106.68" y="114.3"/>
 </segment>
 </net>
-<net name="N$52" class="0">
-<segment>
-<pinref part="R27" gate="G$1" pin="P$1"/>
-<wire x1="312.42" y1="193.04" x2="292.1" y2="193.04" width="0.1524" layer="91"/>
-<wire x1="292.1" y1="193.04" x2="292.1" y2="198.12" width="0.1524" layer="91"/>
-<pinref part="U11" gate="G$1" pin="INM"/>
-<wire x1="292.1" y1="198.12" x2="292.1" y2="208.28" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="OP1" class="0">
-<segment>
-<pinref part="U11" gate="G$1" pin="INP"/>
-<wire x1="292.1" y1="213.36" x2="287.02" y2="213.36" width="0.1524" layer="91"/>
-<label x="281.94" y="213.36" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="R1" gate="G$1" pin="P$1"/>
-<pinref part="R5" gate="G$1" pin="P$2"/>
-<wire x1="144.78" y1="86.36" x2="144.78" y2="83.82" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="83.82" x2="144.78" y2="81.28" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="83.82" x2="149.86" y2="83.82" width="0.1524" layer="91"/>
-<junction x="144.78" y="83.82"/>
-<label x="149.86" y="83.82" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ADC3" class="0">
-<segment>
-<pinref part="R26" gate="G$1" pin="P$2"/>
-<pinref part="U12" gate="G$1" pin="OUT"/>
-<wire x1="320.04" y1="147.32" x2="320.04" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="320.04" y1="167.64" x2="317.5" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="320.04" y1="167.64" x2="327.66" y2="167.64" width="0.1524" layer="91"/>
-<junction x="320.04" y="167.64"/>
-<label x="327.66" y="167.64" size="1.778" layer="95"/>
-</segment>
 <segment>
 <pinref part="J3" gate="A" pin="P$3"/>
 <wire x1="370.84" y1="200.66" x2="365.76" y2="200.66" width="0.1524" layer="91"/>
 <label x="360.68" y="200.66" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="OP2" class="0">
-<segment>
-<pinref part="U12" gate="G$1" pin="INP"/>
-<wire x1="292.1" y1="170.18" x2="287.02" y2="170.18" width="0.1524" layer="91"/>
-<label x="281.94" y="170.18" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R10" gate="G$1" pin="P$1"/>
@@ -2964,14 +2835,6 @@ little box challenge</text>
 <wire x1="342.9" y1="78.74" x2="345.44" y2="78.74" width="0.1524" layer="91"/>
 <junction x="342.9" y="86.36"/>
 <label x="345.44" y="78.74" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="N$51" class="0">
-<segment>
-<pinref part="U12" gate="G$1" pin="INM"/>
-<pinref part="R26" gate="G$1" pin="P$1"/>
-<wire x1="292.1" y1="165.1" x2="292.1" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="292.1" y1="147.32" x2="309.88" y2="147.32" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="GNDM" class="0">
@@ -3085,11 +2948,6 @@ little box challenge</text>
 <pinref part="GNDM15" gate="G$1" pin="GNDM"/>
 </segment>
 <segment>
-<pinref part="R10" gate="G$1" pin="P$2"/>
-<wire x1="330.2" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
-<pinref part="GNDM16" gate="G$1" pin="GNDM"/>
-</segment>
-<segment>
 <pinref part="C10" gate="G$1" pin="P$1"/>
 <wire x1="375.92" y1="137.16" x2="375.92" y2="139.7" width="0.1524" layer="91"/>
 <wire x1="375.92" y1="139.7" x2="381" y2="139.7" width="0.1524" layer="91"/>
@@ -3110,14 +2968,6 @@ little box challenge</text>
 <wire x1="360.68" y1="139.7" x2="360.68" y2="142.24" width="0.1524" layer="91"/>
 <junction x="360.68" y="139.7"/>
 <pinref part="GNDM17" gate="G$1" pin="GNDM"/>
-</segment>
-<segment>
-<pinref part="U12" gate="G$1" pin="G"/>
-<pinref part="GNDM18" gate="G$1" pin="GNDM"/>
-</segment>
-<segment>
-<pinref part="U11" gate="G$1" pin="G"/>
-<pinref part="GNDM19" gate="G$1" pin="GNDM"/>
 </segment>
 <segment>
 <pinref part="J3" gate="A" pin="P$7"/>
@@ -3153,19 +3003,13 @@ little box challenge</text>
 <pinref part="C25" gate="G$1" pin="P$2"/>
 <wire x1="309.88" y1="238.76" x2="317.5" y2="238.76" width="0.1524" layer="91"/>
 <junction x="309.88" y="238.76"/>
-<pinref part="C27" gate="G$1" pin="P$2"/>
 <wire x1="325.12" y1="238.76" x2="317.5" y2="238.76" width="0.1524" layer="91"/>
 <junction x="317.5" y="238.76"/>
-<pinref part="C28" gate="G$1" pin="P$2"/>
-<wire x1="332.74" y1="238.76" x2="325.12" y2="238.76" width="0.1524" layer="91"/>
-<junction x="325.12" y="238.76"/>
 <pinref part="GNDM24" gate="G$1" pin="GNDM"/>
 <pinref part="C29" gate="G$1" pin="P$2"/>
-<wire x1="340.36" y1="238.76" x2="332.74" y2="238.76" width="0.1524" layer="91"/>
-<junction x="332.74" y="238.76"/>
 <pinref part="C30" gate="G$1" pin="P$2"/>
-<wire x1="347.98" y1="238.76" x2="340.36" y2="238.76" width="0.1524" layer="91"/>
-<junction x="340.36" y="238.76"/>
+<wire x1="332.74" y1="238.76" x2="325.12" y2="238.76" width="0.1524" layer="91"/>
+<junction x="325.12" y="238.76"/>
 </segment>
 <segment>
 <pinref part="Z1" gate="G$1" pin="P$2"/>

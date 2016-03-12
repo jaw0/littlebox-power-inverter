@@ -23,15 +23,14 @@ main board
 
         2220Y2K00104KXTWS2      .1uF, 2kV               smd 2220
 
-        SCS210KGC               diode, non-synch boost
-        GB02SLT12               elevator diode 1200V (digikey)
+        GB02SLT12               diode SiC 1200V (digikey)
         ACPL-P346               opto-isolated driver    (6pin smd) (55,55,8,8 ns)
 
         ACS709LLFTR-10BB-T       (digikey?) (10bb=24A) (newark.com)
 
         molex 70543-0002
 
-        C2M0160120D
+        C2M0160120D             mosfet cree SiC 1200V
 
         RS07J-GS08              output voltage sensor diodes 600V, 1.5A
 
@@ -50,9 +49,10 @@ main board
 
 
 control board
+        stm32f415
         AST3TQ-10.00MHz-2       tcxo
         mcp1824
-        acs711                  (digikey)
+        lmp8640                 current sense
         BZX384B3V9-E3-18        3.9V zener
 
         R 0603 22

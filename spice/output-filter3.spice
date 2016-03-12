@@ -1,8 +1,8 @@
 gpi1 output filter
 
-* as of 20140928, this is what is on the Rev.0 board
+* this is what is on the filter3 board
 *
-* R @ 42k;  22V @ 300k
+* R @ 14k;  3V @ 300k
 *
 * 1 3
 * 2 0
@@ -19,11 +19,11 @@ gpi1 output filter
 *
 
 
-L1 1 3 15u
+L1 1 3 100u
 
-L2 2 0 15u
+L2 2 0 100u
 
-C1 3 0 .47u
+C1 3 0 .68u
 
 Rload 3 0 1000
 Vin   1 2 AC 1000

@@ -1,10 +1,8 @@
 gpi1 output filter
 
-* this is what is on the Rev.1 board
+* this is what is on the filter2 board
 *
-* R @ 14k;  3V @ 300k
-
-* http://ngspice.sourceforge.net/docs/ngspice23-manual.pdf
+* R @ 29k;  10V @ 300k
 *
 * 1 3
 * 2 0
@@ -21,9 +19,9 @@ gpi1 output filter
 *
 
 
-L1 1 3 100u
+L1 1 3 22u
 
-L2 2 0 100u
+L2 2 0 22u
 
 C1 3 0 .68u
 

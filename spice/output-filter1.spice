@@ -1,12 +1,11 @@
 gpi1 output filter
 
+* this is the filter1 board
+*
 * low-pass + notch
 * R @ 52k, 157k, 450k, 525k
 * ok 290k - 390k; meh @ 600k
 
-* QQQ - use C1+C3; C1+C2; C3+C4 is there a difference?
-
-* http://ngspice.sourceforge.net/docs/ngspice23-manual.pdf
 *
 * 1 3 5
 * 2 4 0

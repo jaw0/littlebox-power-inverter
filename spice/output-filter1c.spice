@@ -1,11 +1,10 @@
 gpi1 output filter
 
-
+* this is what is on the filter1 board
+*
 * R @ 56k
 * 38V @ 300k
 
-
-* http://ngspice.sourceforge.net/docs/ngspice23-manual.pdf
 *
 * 1 3 5
 * 2 4 0

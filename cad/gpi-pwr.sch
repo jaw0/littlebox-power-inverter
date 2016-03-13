@@ -53,6 +53,9 @@
 <layer number="53" name="tGND_GNDA" color="7" fill="1" visible="no" active="no"/>
 <layer number="54" name="bGND_GNDA" color="7" fill="1" visible="no" active="no"/>
 <layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
+<layer number="57" name="tCAD" color="7" fill="1" visible="no" active="no"/>
+<layer number="59" name="tCarbon" color="7" fill="1" visible="no" active="no"/>
+<layer number="60" name="bCarbon" color="7" fill="1" visible="no" active="no"/>
 <layer number="90" name="Modules" color="5" fill="1" visible="yes" active="yes"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
@@ -62,6 +65,7 @@
 <layer number="96" name="Values" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="97" name="Info" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="98" name="Guide" color="6" fill="1" visible="yes" active="yes"/>
+<layer number="99" name="SpiceOrder" color="7" fill="1" visible="no" active="no"/>
 <layer number="100" name="Muster" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="101" name="Hidden" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="102" name="Changes" color="12" fill="1" visible="yes" active="yes"/>
@@ -75,7 +79,9 @@
 <layer number="110" name="fp0" color="7" fill="1" visible="no" active="yes"/>
 <layer number="111" name="LPC17xx" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="112" name="tSilk" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="113" name="ReferenceLS" color="7" fill="1" visible="no" active="no"/>
 <layer number="116" name="Patch_BOT" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="118" name="Rect_Pads" color="7" fill="1" visible="no" active="no"/>
 <layer number="121" name="_tsilk" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="122" name="_bsilk" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="123" name="tTestmark" color="7" fill="1" visible="no" active="yes"/>
@@ -84,11 +90,16 @@
 <layer number="126" name="_bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="127" name="_tValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="128" name="_bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="129" name="Mask" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="131" name="prix" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="132" name="test" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="144" name="Drill_legend" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="150" name="Notes" color="7" fill="1" visible="no" active="yes"/>
 <layer number="151" name="HeatSink" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="152" name="_bDocu" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="153" name="FabDoc1" color="6" fill="1" visible="no" active="no"/>
+<layer number="154" name="FabDoc2" color="2" fill="1" visible="no" active="no"/>
+<layer number="155" name="FabDoc3" color="7" fill="15" visible="no" active="no"/>
 <layer number="199" name="Contour" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="200" name="200bmp" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="201" name="201bmp" color="7" fill="1" visible="yes" active="yes"/>
@@ -115,11 +126,21 @@
 <layer number="222" name="222bmp" color="23" fill="1" visible="no" active="no"/>
 <layer number="223" name="223bmp" color="24" fill="1" visible="no" active="no"/>
 <layer number="224" name="224bmp" color="25" fill="1" visible="no" active="no"/>
+<layer number="225" name="225bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="226" name="226bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="227" name="227bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="228" name="228bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="229" name="229bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="230" name="230bmp" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="231" name="Eagle3D_PG1" color="7" fill="1" visible="no" active="no"/>
+<layer number="232" name="Eagle3D_PG2" color="7" fill="1" visible="no" active="no"/>
+<layer number="233" name="Eagle3D_PG3" color="7" fill="1" visible="no" active="no"/>
 <layer number="248" name="Housing" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="249" name="Edge" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="250" name="Descript" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="251" name="SMDround" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="254" name="cooling" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="255" name="routoute" color="7" fill="1" visible="yes" active="yes"/>
 </layers>
 <schematic xreflabel="%F%N/%S.%C%R" xrefpart="/%S.%C%R">
 <libraries>
@@ -1745,7 +1766,6 @@ With round pins</description>
 <part name="GNDM11" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM12" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM1" library="jaw" deviceset="PWR-GNDM" device=""/>
-<part name="GNDM13" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM14" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM15" library="jaw" deviceset="PWR-GNDM" device=""/>
 <part name="GNDM17" library="jaw" deviceset="PWR-GNDM" device=""/>
@@ -1768,6 +1788,7 @@ With round pins</description>
 <part name="Z3" library="jaw" deviceset="SHORT" device=""/>
 <part name="C6" library="jaw-brd" deviceset="FILTER" device=""/>
 <part name="GND10" library="jaw" deviceset="PWR-GND" device=""/>
+<part name="GND11" library="jaw" deviceset="PWR-GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -1908,7 +1929,6 @@ little box challenge</text>
 <instance part="GNDM11" gate="G$1" x="220.98" y="187.96"/>
 <instance part="GNDM12" gate="G$1" x="246.38" y="185.42"/>
 <instance part="GNDM1" gate="G$1" x="58.42" y="132.08"/>
-<instance part="GNDM13" gate="G$1" x="144.78" y="63.5"/>
 <instance part="GNDM14" gate="G$1" x="154.94" y="205.74"/>
 <instance part="GNDM15" gate="G$1" x="203.2" y="205.74"/>
 <instance part="GNDM17" gate="G$1" x="396.24" y="129.54"/>
@@ -1931,6 +1951,7 @@ little box challenge</text>
 <instance part="Z3" gate="G$1" x="170.18" y="60.96"/>
 <instance part="C6" gate="G$1" x="297.18" y="86.36"/>
 <instance part="GND10" gate="G$1" x="327.66" y="83.82"/>
+<instance part="GND11" gate="G$1" x="144.78" y="63.5"/>
 </instances>
 <busses>
 </busses>
@@ -2031,6 +2052,11 @@ little box challenge</text>
 <pinref part="R10" gate="G$1" pin="P$2"/>
 <wire x1="330.2" y1="86.36" x2="327.66" y2="86.36" width="0.1524" layer="91"/>
 <pinref part="GND10" gate="G$1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="R5" gate="G$1" pin="P$1"/>
+<wire x1="144.78" y1="66.04" x2="144.78" y2="71.12" width="0.1524" layer="91"/>
+<pinref part="GND11" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="N$1" class="0">
@@ -2920,11 +2946,6 @@ little box challenge</text>
 <wire x1="25.4" y1="139.7" x2="25.4" y2="142.24" width="0.1524" layer="91"/>
 <junction x="25.4" y="139.7"/>
 <pinref part="GNDM1" gate="G$1" pin="GNDM"/>
-</segment>
-<segment>
-<pinref part="R5" gate="G$1" pin="P$1"/>
-<wire x1="144.78" y1="66.04" x2="144.78" y2="71.12" width="0.1524" layer="91"/>
-<pinref part="GNDM13" gate="G$1" pin="GNDM"/>
 </segment>
 <segment>
 <pinref part="U10" gate="G$1" pin="G"/>

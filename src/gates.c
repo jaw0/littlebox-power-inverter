@@ -66,7 +66,7 @@ set_boost_pwm(int v, int m){
             gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_25MHZ );
             gpio_clear( HW_GPIO_GATE_BOOST_H );
         }
-#if 0
+#ifdef BOOST_ADJ_FREQ
         // adjust freq - to avoid saturation + heat
         // Tsat = Isat L / Vin
         // pwmmax = Isat LuH F 64k / 1e6 / Vin
@@ -205,7 +205,7 @@ init_gates(void){
 
     bootmsg(" gates");
 
-    //gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_AF(3) | GPIO_SPEED_50MHZ );
+    // start with unsync config
     gpio_init( HW_GPIO_GATE_BOOST_H,     GPIO_OUTPUT | GPIO_PUSH_PULL | GPIO_SPEED_25MHZ );
     gpio_clear(HW_GPIO_GATE_BOOST_H);
 
@@ -267,6 +267,7 @@ DEFUN(testhbr, "test hbridge")
         curr_t0 = get_hrtime();		// for logging
         read_sensors();
         update_stats_dc();
+
         set_hbridge_pwm(pwm_hbridge = i);
 
         i += d * 256;
@@ -281,8 +282,11 @@ DEFUN(testhbr, "test hbridge")
         if( !get_switch() )   break;
         if( check_for_bad() ) break;
 
+        if( curr_vo < 0 ) curr_vo = - curr_vo;
+
         if( get_time() <= tend )
             diaglog(0);
+        else break;
 
         usleep(1000);
     }
@@ -332,8 +336,11 @@ DEFUN(testboost, "test boost")
             d = 1;
         }
 
+        if( curr_vo < 0 ) curr_vo = - curr_vo;
+
         if( get_time() <= tend )
             diaglog(0);
+        else break;
 
         usleep(1000);
     }

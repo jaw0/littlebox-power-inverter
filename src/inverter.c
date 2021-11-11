@@ -23,7 +23,7 @@
 // import pre-calculated sinwave table
 #if (CONTROLFREQ == 21000)
 #  if (GPI_OUTHZ == 50)
-#    include "sin50_350.h"
+#    include "sin50_420.h"
 #  endif
 #  if (GPI_OUTHZ == 60)
 #    include "sin60_350.h"
